@@ -2,6 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Camera permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Optional: For recording audio with video -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Optional: For saving recordings -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Camera features -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,15 +25,39 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.OBS">
+
+        <!-- Splash Activity - Launcher -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name="com.obs.mobile.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.OBS.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Main Menu Activity -->
+        <activity
+            android:name="com.obs.mobile.MainMenuActivity"
+            android:exported="false" />
+
+        <!-- Camera Activity -->
+        <activity
+            android:name="com.obs.mobile.CameraActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Sensors Activity -->
+        <activity
+            android:name="com.obs.mobile.SensorsActivity"
+            android:exported="false" />
+
+        <!-- Scenes Activity -->
+        <activity
+            android:name="com.obs.mobile.ScenesActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

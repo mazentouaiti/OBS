@@ -1,4 +1,4 @@
-package com.example.obs;
+package com.obs.mobile;
 
 import org.junit.Test;
 

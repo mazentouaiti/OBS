@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:titleTextColor="@android:color/white"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/tv_scene_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Scenes will be implemented later\n\nStudents will add:\n• Manual scene selection\n• Sensor-triggered scene switching\n• Scene presets"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:padding="32dp"/>
+
+        <TextView
+            android:id="@+id/tv_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:text="Scene Ideas:\n• Default Scene\n• Night Scene (Light sensor)\n• Outdoor Scene (Light sensor)\n• Sport Scene (Accelerometer)\n• Direction-based Scenes (Magnetometer)"
+            android:textSize="14sp"
+            android:padding="16dp"
+            android:background="#F0F0F0"/>
+
+    </RelativeLayout>
+
+</LinearLayout>
+

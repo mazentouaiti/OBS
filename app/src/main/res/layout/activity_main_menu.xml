@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:titleTextColor="@android:color/white"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tv_welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to OBS Mobile"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tv_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Control your recording with sensors"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginBottom="32dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_camera"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Start Camera / Recording"
+                android:textSize="16sp"
+                app:icon="@android:drawable/ic_menu_camera"
+                app:iconGravity="start"
+                android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sensors"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Sensor Settings"
+                android:textSize="16sp"
+                app:icon="@android:drawable/ic_menu_manage"
+                app:iconGravity="start"
+                android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_scenes"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Scenes"
+                android:textSize="16sp"
+                app:icon="@android:drawable/ic_menu_gallery"
+                app:iconGravity="start"
+                android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_exit"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Exit"
+                android:textSize="16sp"
+                app:icon="@android:drawable/ic_menu_close_clear_cancel"
+                app:iconGravity="start"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
+

@@ -1,3 +1,40 @@
 <resources>
-    <string name="app_name">OBS</string>
+    <string name="app_name">OBS Mobile</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_subtitle">Sensor-Controlled Recording</string>
+    <string name="version">Version 1.0</string>
+
+    <!-- Main Menu -->
+    <string name="welcome">Welcome to OBS Mobile</string>
+    <string name="description">Control your recording with sensors</string>
+    <string name="btn_camera">Start Camera / Recording</string>
+    <string name="btn_sensors">Sensor Settings</string>
+    <string name="btn_scenes">Scenes</string>
+    <string name="btn_exit">Exit</string>
+
+    <!-- Camera Activity -->
+    <string name="camera_title">Camera Preview</string>
+    <string name="btn_record">Start Recording</string>
+    <string name="btn_stop_record">Stop Recording</string>
+    <string name="btn_switch_camera">Switch</string>
+    <string name="camera_placeholder">Camera preview will be here</string>
+
+    <!-- Sensors Activity -->
+    <string name="sensors_title">Sensor Settings</string>
+    <string name="sensor_accelerometer">Accelerometer</string>
+    <string name="sensor_gyroscope">Gyroscope</string>
+    <string name="sensor_light">Light Sensor</string>
+    <string name="sensor_proximity">Proximity Sensor</string>
+    <string name="sensor_magnetometer">Magnetometer / Compass</string>
+
+    <!-- Scenes Activity -->
+    <string name="scenes_title">Scenes</string>
+    <string name="scenes_placeholder">Scenes will be implemented later</string>
+
+    <!-- Dialog -->
+    <string name="exit_dialog_title">Exit OBS Mobile</string>
+    <string name="exit_dialog_message">Are you sure you want to exit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
