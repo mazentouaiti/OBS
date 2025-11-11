@@ -20,6 +20,24 @@
     <string name="btn_switch_camera">Switch</string>
     <string name="camera_placeholder">Camera preview will be here</string>
 
+    <!-- Camera activity dynamic strings -->
+    <string name="surface_ready">Surface ready</string>
+    <string name="permission_already_granted">Permission already granted</string>
+    <string name="camera_permission_granted">Camera permission granted</string>
+    <string name="camera_opened">Camera opened</string>
+    <string name="camera_disconnected">Camera disconnected</string>
+    <string name="camera_error">Camera error: %1$d</string>
+    <string name="no_camera_available">No camera available</string>
+    <string name="camera_permission_missing">Camera permission missing</string>
+    <string name="failed_to_open_camera">Failed to open camera: %1$s</string>
+    <string name="preview_running">Preview running</string>
+    <string name="failed_to_start_preview">Failed to start preview: %1$s</string>
+    <string name="failed_to_configure_camera">Failed to configure camera</string>
+    <string name="recording_ui_only">Recording... (UI only)</string>
+    <string name="recording_stopped">Recording stopped</string>
+    <string name="switching_to_front_camera">Switching to front camera</string>
+    <string name="switching_to_back_camera">Switching to back camera</string>
+
     <!-- Sensors Activity -->
     <string name="sensors_title">Sensor Settings</string>
     <string name="sensor_accelerometer">Accelerometer</string>

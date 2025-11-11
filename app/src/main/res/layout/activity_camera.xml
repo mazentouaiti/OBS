@@ -22,12 +22,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Camera Preview Placeholder -->
-        <SurfaceView
-            android:id="@+id/surface_view"
+        <!-- Camera Preview with TextureView -->
+        <TextureView
+            android:id="@+id/texture_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#000000"/>
+            android:layout_height="match_parent"/>
 
         <!-- Status Text Overlay -->
         <TextView
@@ -58,26 +57,53 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp"
             android:background="#AA000000">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_switch_camera"
-                android:layout_width="wrap_content"
+            <!-- First row: Switch and Record -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Switch"
-                android:layout_marginEnd="16dp"
-                style="@style/Widget.Material3.Button.OutlinedButton"/>
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_record"
-                android:layout_width="0dp"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_switch_camera"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Switch"
+                    android:layout_marginEnd="8dp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_record"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Start Recording"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+            <!-- Second row: Only Floating button (PiP removed) -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Start Recording"
-                android:textSize="16sp"/>
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_floating"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="🪟 Floating Camera"
+                    android:textSize="16sp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -139,4 +165,3 @@
     </RelativeLayout>
 
 </LinearLayout>
-
