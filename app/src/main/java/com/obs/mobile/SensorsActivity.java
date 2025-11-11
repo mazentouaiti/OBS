@@ -14,6 +14,7 @@ import com.obs.mobile.sensors.GyroscopeSensor;
 import com.obs.mobile.sensors.LightSensor;
 import com.obs.mobile.sensors.ProximitySensor;
 import com.obs.mobile.sensors.MagnetometerSensor;
+import com.obs.mobile.utils.SensorPreferences;
 
 /**
  * SensorsActivity - Sensor Settings and Monitoring Screen
@@ -85,6 +86,10 @@ public class SensorsActivity extends AppCompatActivity {
         tvLightData = findViewById(R.id.tv_light_data);
         tvProximityData = findViewById(R.id.tv_proximity_data);
         tvMagnetData = findViewById(R.id.tv_magnet_data);
+
+        // Restore saved gyroscope state
+        boolean isGyroEnabled = SensorPreferences.isGyroscopeEnabled(this);
+        switchGyroscope.setChecked(isGyroEnabled);
     }
 
     /**
@@ -171,6 +176,9 @@ public class SensorsActivity extends AppCompatActivity {
                 gyroscopeSensor.stopListening();
                 tvGyroData.setText("Gyroscope: Disabled");
             }
+
+            // Save the state of the gyroscope switch
+            SensorPreferences.setGyroscopeEnabled(this, isChecked);
         });
 
         /* TODO (Student 3 - Light Sensor):

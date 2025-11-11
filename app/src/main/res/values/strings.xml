@@ -1,58 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OBS Mobile</string>
 
-    <!-- Splash Screen -->
-    <string name="splash_subtitle">Sensor-Controlled Recording</string>
-    <string name="version">Version 1.0</string>
-
-    <!-- Main Menu -->
-    <string name="welcome">Welcome to OBS Mobile</string>
-    <string name="description">Control your recording with sensors</string>
-    <string name="btn_camera">Start Camera / Recording</string>
-    <string name="btn_sensors">Sensor Settings</string>
-    <string name="btn_scenes">Scenes</string>
-    <string name="btn_exit">Exit</string>
+    <!-- Activity Titles -->
+    <string name="camera_title">Camera</string>
+    <string name="sensors_title">Sensors</string>
+    <string name="main_menu_title">Main Menu</string>
 
     <!-- Camera Activity -->
-    <string name="camera_title">Camera Preview</string>
-    <string name="btn_record">Start Recording</string>
-    <string name="btn_stop_record">Stop Recording</string>
-    <string name="btn_switch_camera">Switch</string>
-    <string name="camera_placeholder">Camera preview will be here</string>
-
-    <!-- Camera activity dynamic strings -->
-    <string name="surface_ready">Surface ready</string>
-    <string name="permission_already_granted">Permission already granted</string>
+    <string name="permission_already_granted">Camera permission granted</string>
     <string name="camera_permission_granted">Camera permission granted</string>
+    <string name="camera_permission_missing">Camera permission required</string>
     <string name="camera_opened">Camera opened</string>
     <string name="camera_disconnected">Camera disconnected</string>
-    <string name="camera_error">Camera error: %1$d</string>
-    <string name="no_camera_available">No camera available</string>
-    <string name="camera_permission_missing">Camera permission missing</string>
-    <string name="failed_to_open_camera">Failed to open camera: %1$s</string>
-    <string name="preview_running">Preview running</string>
-    <string name="failed_to_start_preview">Failed to start preview: %1$s</string>
-    <string name="failed_to_configure_camera">Failed to configure camera</string>
-    <string name="recording_ui_only">Recording... (UI only)</string>
-    <string name="recording_stopped">Recording stopped</string>
-    <string name="switching_to_front_camera">Switching to front camera</string>
-    <string name="switching_to_back_camera">Switching to back camera</string>
+    <string name="camera_error">Camera error: %d</string>
+    <string name="btn_record">Record</string>
+    <string name="btn_stop_record">Stop</string>
 
-    <!-- Sensors Activity -->
-    <string name="sensors_title">Sensor Settings</string>
-    <string name="sensor_accelerometer">Accelerometer</string>
-    <string name="sensor_gyroscope">Gyroscope</string>
-    <string name="sensor_light">Light Sensor</string>
-    <string name="sensor_proximity">Proximity Sensor</string>
-    <string name="sensor_magnetometer">Magnetometer / Compass</string>
+    <!-- Floating Camera -->
+    <string name="live_indicator">📹 LIVE</string>
 
-    <!-- Scenes Activity -->
-    <string name="scenes_title">Scenes</string>
-    <string name="scenes_placeholder">Scenes will be implemented later</string>
+    <!-- Gyroscope Toggle -->
+    <string name="btn_gyro_enable">Gyro ON</string>
+    <string name="btn_gyro_disable">Gyro OFF</string>
 
-    <!-- Dialog -->
-    <string name="exit_dialog_title">Exit OBS Mobile</string>
-    <string name="exit_dialog_message">Are you sure you want to exit?</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <!-- Common -->
+    <string name="close">Close</string>
+    <string name="resize">Resize</string>
 </resources>

@@ -56,12 +56,9 @@ public class GyroscopeSensor {
      * 3. Check if sensor exists
      */
     public boolean initialize() {
-        // TODO: Implement initialization
-        // sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        // gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        // return gyroscope != null;
-
-        return false; // Replace with actual implementation
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        return gyroscope != null;
     }
 
     /**
@@ -75,9 +72,6 @@ public class GyroscopeSensor {
      * 5. Register with SENSOR_DELAY_GAME for fast updates
      */
     public void startListening() {
-        // TODO: Implement listener
-
-        /* EXAMPLE CODE:
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
@@ -107,17 +101,15 @@ public class GyroscopeSensor {
             sensorManager.registerListener(listener, gyroscope,
                 SensorManager.SENSOR_DELAY_GAME);
         }
-        */
     }
 
     /**
      * TODO (Student 2): Unregister sensor listener
      */
     public void stopListening() {
-        // TODO: Unregister listener
-        // if (sensorManager != null && listener != null) {
-        //     sensorManager.unregisterListener(listener);
-        // }
+        if (sensorManager != null && listener != null) {
+            sensorManager.unregisterListener(listener);
+        }
     }
 
     /**
@@ -162,4 +154,3 @@ public class GyroscopeSensor {
         void onFastRotation(float degrees);
     }
 }
-

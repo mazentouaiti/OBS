@@ -14,7 +14,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -57,7 +56,7 @@ public class FloatingCameraServiceFixed extends Service {
     private HandlerThread backgroundThread;
     private Handler backgroundHandler;
 
-    private boolean isFrontCamera = true;
+    private final boolean isFrontCamera = true;
     private int currentSize = 1; // 0=small, 1=medium, 2=large
 
     // Window parameters for drag
@@ -113,9 +112,10 @@ public class FloatingCameraServiceFixed extends Service {
         Log.d(TAG, "🪟 Creating floating window...");
 
         try {
-            // Create a simple programmatic layout if XML fails
-            floatingView = createProgrammaticLayout();
-            Log.d(TAG, "✅ Programmatic layout created");
+            // Try XML layout first
+            FrameLayout container = new FrameLayout(this);
+            floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_camera, container, false);
+            Log.d(TAG, "✅ XML layout inflated successfully");
 
             // Window parameters with more compatible settings
             params = new WindowManager.LayoutParams();
@@ -136,22 +136,21 @@ public class FloatingCameraServiceFixed extends Service {
             windowManager.addView(floatingView, params);
             Log.d(TAG, "✅ Floating window added to WindowManager successfully!");
 
-            setupViewListeners();
+            setupXMLViewListeners();
             return true;
 
         } catch (Exception e) {
-            Log.e(TAG, "❌ Exception creating floating window", e);
+            Log.e(TAG, "❌ Exception with XML layout, trying programmatic", e);
 
-            // Try fallback method
+            // Try fallback programmatic method
             try {
-                Log.d(TAG, "🔄 Trying fallback XML layout...");
-                floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_camera, null);
+                floatingView = createProgrammaticLayout();
                 windowManager.addView(floatingView, params);
-                Log.d(TAG, "✅ Fallback XML layout worked!");
-                setupXMLViewListeners();
+                Log.d(TAG, "✅ Programmatic layout worked!");
+                setupViewListeners();
                 return true;
             } catch (Exception fallbackException) {
-                Log.e(TAG, "❌ Fallback also failed", fallbackException);
+                Log.e(TAG, "❌ Both methods failed", fallbackException);
                 return false;
             }
         }
@@ -190,7 +189,7 @@ public class FloatingCameraServiceFixed extends Service {
 
         // Create status text
         TextView statusText = new TextView(this);
-        statusText.setText("📹 LIVE");
+        statusText.setText(R.string.live_indicator);
         statusText.setTextColor(0xFFFF4444);
         statusText.setBackgroundColor(0xAA000000);
         statusText.setPadding(8, 4, 8, 4);
@@ -219,7 +218,7 @@ public class FloatingCameraServiceFixed extends Service {
             resizeWindow();
         });
 
-        // Drag functionality
+        // Drag functionality with performClick for accessibility
         floatingView.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -227,6 +226,11 @@ public class FloatingCameraServiceFixed extends Service {
                     initialY = params.y;
                     initialTouchX = event.getRawX();
                     initialTouchY = event.getRawY();
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                    // Perform click for accessibility
+                    v.performClick();
                     return true;
 
                 case MotionEvent.ACTION_MOVE:
@@ -239,7 +243,20 @@ public class FloatingCameraServiceFixed extends Service {
         });
 
         // TextureView listener
-        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        if (textureView != null) {
+            textureView.setSurfaceTextureListener(createTextureListener());
+        }
+    }
+
+    private void setupXMLViewListeners() {
+        textureView = floatingView.findViewById(R.id.texture_view_floating);
+        btnClose = floatingView.findViewById(R.id.btn_close_floating);
+        btnResize = floatingView.findViewById(R.id.btn_resize_floating);
+        setupViewListeners();
+    }
+
+    private TextureView.SurfaceTextureListener createTextureListener() {
+        return new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
                 Log.d(TAG, "📹 TextureView surface available: " + width + "x" + height);
@@ -262,14 +279,7 @@ public class FloatingCameraServiceFixed extends Service {
             public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
                 // Called for each frame - don't log here
             }
-        });
-    }
-
-    private void setupXMLViewListeners() {
-        textureView = floatingView.findViewById(R.id.texture_view_floating);
-        btnClose = floatingView.findViewById(R.id.btn_close_floating);
-        btnResize = floatingView.findViewById(R.id.btn_resize_floating);
-        setupViewListeners();
+        };
     }
 
     private void resizeWindow() {
@@ -477,3 +487,4 @@ public class FloatingCameraServiceFixed extends Service {
         }
     }
 }
+

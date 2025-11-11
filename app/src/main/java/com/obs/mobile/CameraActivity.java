@@ -35,13 +35,19 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+// Import GyroscopeSensor
+import com.obs.mobile.sensors.GyroscopeSensor;
+import com.obs.mobile.utils.SensorPreferences;
+
 import java.util.Collections;
+import java.util.Locale;
 
 /**
- * CameraActivity - Camera Preview and Recording Screen (no sensors)
+ * CameraActivity - Camera Preview and Recording Screen with Gyroscope
  *
  * Uses TextureView for camera preview with Camera2 API
  * Supports PiP mode and floating window
+ * Shows gyroscope data overlay on camera view only (not on floating window)
  */
 public class CameraActivity extends AppCompatActivity {
 
@@ -52,8 +58,13 @@ public class CameraActivity extends AppCompatActivity {
     private TextView tvStatus;
     private Button btnRecord;
     private Button btnSwitchCamera;
-    private Button btnFloating;  // Removed btnPip
+    private Button btnFloating;
     private View recordingIndicator;
+
+    // Gyroscope components
+    private GyroscopeSensor gyroscopeSensor;
+    private View gyroscopeOverlay;
+    private TextView tvGyroData;
 
     private CameraManager cameraManager;
     private CameraDevice cameraDevice;
@@ -79,7 +90,7 @@ public class CameraActivity extends AppCompatActivity {
             Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
             if (getSupportActionBar() != null) {
-                getSupportActionBar().setTitle(R.string.camera_title);
+                getSupportActionBar().setTitle("Camera with Gyroscope");
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             }
 
@@ -89,6 +100,8 @@ public class CameraActivity extends AppCompatActivity {
             btnSwitchCamera = findViewById(R.id.btn_switch_camera);
             btnFloating = findViewById(R.id.btn_floating);
             recordingIndicator = findViewById(R.id.recording_indicator);
+            gyroscopeOverlay = findViewById(R.id.gyroscope_overlay);
+            tvGyroData = findViewById(R.id.tv_gyro_data);
 
             cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -99,6 +112,9 @@ public class CameraActivity extends AppCompatActivity {
             if (btnFloating != null) {
                 btnFloating.setOnClickListener(v -> startFloatingCamera());
             }
+
+            // Initialize gyroscope sensor
+            setupGyroscopeSensor();
 
             textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
                 @Override
@@ -146,16 +162,20 @@ public class CameraActivity extends AppCompatActivity {
                 Log.d(TAG, "onPictureInPictureModeChanged: " + isInPictureInPictureMode);
 
                 if (isInPictureInPictureMode) {
-                    // Hide UI controls in PiP mode
+                    // Hide UI controls in PiP mode (INCLUDING gyroscope overlay)
                     if (btnRecord != null) btnRecord.setVisibility(View.GONE);
                     if (btnSwitchCamera != null) btnSwitchCamera.setVisibility(View.GONE);
                     if (btnFloating != null) btnFloating.setVisibility(View.GONE);
                     if (tvStatus != null) tvStatus.setVisibility(View.GONE);
+                    if (gyroscopeOverlay != null) gyroscopeOverlay.setVisibility(View.GONE);
                 } else {
-                    // Show UI controls when exiting PiP
+                    // Show UI controls when exiting PiP (INCLUDING gyroscope overlay)
                     if (btnRecord != null) btnRecord.setVisibility(View.VISIBLE);
                     if (btnSwitchCamera != null) btnSwitchCamera.setVisibility(View.VISIBLE);
                     if (btnFloating != null) btnFloating.setVisibility(View.VISIBLE);
+                    if (gyroscopeOverlay != null && gyroscopeSensor != null && gyroscopeSensor.isAvailable()) {
+                        gyroscopeOverlay.setVisibility(View.VISIBLE);
+                    }
                 }
             });
 
@@ -164,6 +184,43 @@ public class CameraActivity extends AppCompatActivity {
             Log.e(TAG, "onCreate error: ", e);
             Toast.makeText(this, "Error initializing camera: " + e.getMessage(), Toast.LENGTH_LONG).show();
             finish();
+        }
+    }
+
+    /**
+     * Initialize and setup gyroscope sensor
+     */
+    private void setupGyroscopeSensor() {
+        gyroscopeSensor = new GyroscopeSensor(this);
+
+        // Set rotation listener to update gyroscope data display
+        gyroscopeSensor.setOnRotationListener((rotationX, rotationY, rotationZ) -> {
+            runOnUiThread(() -> {
+                if (tvGyroData != null && gyroscopeOverlay != null) {
+                    String gyroData = String.format(Locale.US,
+                        "X: %.2f rad/s\nY: %.2f rad/s\nZ: %.2f rad/s",
+                        rotationX, rotationY, rotationZ);
+                    tvGyroData.setText(gyroData);
+
+                    // Show gyroscope overlay when data is received and gyroscope is enabled
+                    if (SensorPreferences.isGyroscopeEnabled(this)) {
+                        gyroscopeOverlay.setVisibility(View.VISIBLE);
+                    } else {
+                        gyroscopeOverlay.setVisibility(View.GONE);
+                    }
+                }
+            });
+        });
+
+        // Initialize and start gyroscope sensor
+        if (gyroscopeSensor.initialize()) {
+            gyroscopeSensor.startListening();
+            Log.d(TAG, "Gyroscope sensor initialized and started");
+        } else {
+            Log.w(TAG, "Gyroscope sensor not available on this device");
+            if (gyroscopeOverlay != null) {
+                gyroscopeOverlay.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -389,6 +446,7 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * Enter Picture-in-Picture mode
      */
@@ -471,6 +529,11 @@ public class CameraActivity extends AppCompatActivity {
                 == PackageManager.PERMISSION_GRANTED) {
             openCamera();
         }
+
+        // Start gyroscope sensor listening
+        if (gyroscopeSensor != null) {
+            gyroscopeSensor.startListening();
+        }
     }
 
     @Override
@@ -478,6 +541,11 @@ public class CameraActivity extends AppCompatActivity {
         super.onPause();
         closeCamera();
         stopBackgroundThread();
+
+        // Stop gyroscope sensor listening
+        if (gyroscopeSensor != null) {
+            gyroscopeSensor.stopListening();
+        }
     }
 
     @Override
@@ -485,6 +553,12 @@ public class CameraActivity extends AppCompatActivity {
         super.onDestroy();
         closeCamera();
         stopBackgroundThread();
+
+        // Clean up gyroscope sensor
+        if (gyroscopeSensor != null) {
+            gyroscopeSensor.stopListening();
+            gyroscopeSensor = null;
+        }
     }
 
     @Override

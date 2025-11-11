@@ -1,167 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:titleTextColor="@android:color/white"/>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <RelativeLayout
+    <!-- Camera Preview -->
+    <TextureView
+        android:id="@+id/texture_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar" />
 
-        <!-- Camera Preview with TextureView -->
-        <TextureView
-            android:id="@+id/texture_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+    <!-- Gyroscope Data Overlay (Only visible in camera, not floating) -->
+    <LinearLayout
+        android:id="@+id/gyroscope_overlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:background="#80000000"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
 
-        <!-- Status Text Overlay -->
         <TextView
-            android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="Camera preview will be here\n\nGrant camera permission and implement CameraX or Camera2 API"
-            android:textSize="18sp"
-            android:textColor="@android:color/white"
-            android:gravity="center"
-            android:padding="24dp"
-            android:background="#80000000"/>
+            android:text="Gyroscope"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-        <!-- Recording Indicator -->
-        <View
-            android:id="@+id/recording_indicator"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="16dp"
-            android:background="@android:drawable/presence_video_online"
-            android:visibility="gone"/>
-
-        <!-- Control Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#AA000000">
-
-            <!-- First row: Switch and Record -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginBottom="8dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_switch_camera"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Switch"
-                    android:layout_marginEnd="8dp"
-                    style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_record"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Start Recording"
-                    android:textSize="16sp"/>
-
-            </LinearLayout>
-
-            <!-- Second row: Only Floating button (PiP removed) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_floating"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="🪟 Floating Camera"
-                    android:textSize="16sp"
-                    style="@style/Widget.Material3.Button.TonalButton"/>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Sensor Data Overlay (for debugging) -->
-        <LinearLayout
-            android:id="@+id/sensor_overlay"
+        <TextView
+            android:id="@+id/tv_gyro_data"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            android:layout_margin="16dp"
-            android:orientation="vertical"
-            android:background="#AA000000"
-            android:padding="8dp"
-            android:visibility="gone">
+            android:layout_marginTop="4dp"
+            android:text="X: 0.00 rad/s\nY: 0.00 rad/s\nZ: 0.00 rad/s"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
 
-            <TextView
-                android:id="@+id/tv_sensor_accel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Accel: --"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"/>
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_sensor_gyro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gyro: --"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"/>
+    <!-- Status TextView -->
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp"
+        android:background="#80000000"
+        android:padding="8dp"
+        android:text="Initializing camera..."
+        android:textColor="#FFFFFF"
+        android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/tv_sensor_light"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Light: --"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"/>
+    <!-- Recording Indicator -->
+    <View
+        android:id="@+id/recording_indicator"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_below="@id/toolbar"
+        android:layout_alignParentStart="true"
+        android:layout_margin="16dp"
+        android:background="@drawable/circle_red"
+        android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tv_sensor_proximity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Proximity: --"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"/>
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp"
+        android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_sensor_compass"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Compass: --"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"/>
+        <Button
+            android:id="@+id/btn_switch_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Switch" />
 
-        </LinearLayout>
+        <Button
+            android:id="@+id/btn_record"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text="Record" />
 
-    </RelativeLayout>
+        <Button
+            android:id="@+id/btn_floating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Float" />
 
-</LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>
