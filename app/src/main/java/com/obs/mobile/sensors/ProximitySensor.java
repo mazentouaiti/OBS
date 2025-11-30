@@ -7,32 +7,25 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 /**
- * ProximitySensor - Independent sensor class for proximity detection
+ * ProximitySensor
+ * ---------------------------------------------------------
+ * A reusable helper class that wraps Android's proximity sensor
+ * and provides easy-to-use callbacks for NEAR/FAR detection.
  *
- * ============================================================
- * TODO (Student 4 - Proximity Sensor):
- * ============================================================
+ * Main features:
+ *  - Detects if an object is close to the front of the device.
+ *  - Debounces noisy sensor data.
+ *  - Supports three callbacks:
+ *      -> onNear()
+ *      -> onFar()
+ *      -> onProximityChanged(distance, isNear)
  *
- * OBJECTIVE: Detect when phone is covered to auto-pause recording
- *
- * WHAT IS A PROXIMITY SENSOR?
- * - Detects how close an object is to the device
- * - Usually binary: NEAR (0) or FAR (max range)
- * - Located near front camera
- *
- * USE CASES:
- * - Auto-pause when phone is in pocket (privacy)
- * - Pause when phone is face-down
- * - Wave gesture detection
- *
- * USAGE IN ACTIVITIES:
- * - Create instance: proximitySensor = new ProximitySensor(this);
- * - Set callbacks:
- *   proximitySensor.setOnNearListener(() -> { ... });
- *   proximitySensor.setOnFarListener(() -> { ... });
- * - Initialize: proximitySensor.initialize();
- * - Start: proximitySensor.startListening(); (in onResume)
- * - Stop: proximitySensor.stopListening(); (in onPause) - CRITICAL!
+ * Usage:
+ *      ProximitySensor ps = new ProximitySensor(this);
+ *      ps.initialize();
+ *      ps.setOnNearListener(() -> pauseRecording());
+ *      ps.startListening();       // onResume
+ *      ps.stopListening();        // onPause
  */
 public class ProximitySensor {
 
@@ -46,79 +39,77 @@ public class ProximitySensor {
     private OnNearListener onNearListener;
     private OnFarListener onFarListener;
 
-    // Proximity state
+    // State
     private boolean isNear = false;
     private float maxRange = 5f;
     private long lastTriggerTime = 0;
 
-    private static final float NEAR_THRESHOLD = 3f; // cm
-    private static final int DEBOUNCE_DELAY = 300; // milliseconds
+    private static final float NEAR_THRESHOLD = 3f; // in centimeters
+    private static final int DEBOUNCE_DELAY = 300; // ms
 
     /**
      * Constructor
+     *
+     * @param context Activity or Service context
      */
     public ProximitySensor(Context context) {
         this.context = context;
     }
 
     /**
-     * TODO (Student 4): Implement sensor initialization
+     * Initializes the proximity sensor.
      *
      * Steps:
-     * 1. Get SensorManager
-     * 2. Get proximity sensor (TYPE_PROXIMITY)
-     * 3. Get maximum range
-     * 4. Check if sensor exists
+     *  1. Retrieve SensorManager
+     *  2. Get TYPE_PROXIMITY sensor
+     *  3. Retrieve max range
+     *
+     * @return true if sensor exists on this device
      */
     public boolean initialize() {
-        // TODO: Implement initialization
-        // sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        // proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        // if (proximitySensor != null) {
-        //     maxRange = proximitySensor.getMaximumRange();
-        // }
-        // return proximitySensor != null;
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager == null) return false;
 
-        return false; // Replace with actual implementation
+        proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        if (proximitySensor != null) {
+            maxRange = proximitySensor.getMaximumRange();
+        }
+
+        return proximitySensor != null;
     }
 
     /**
-     * TODO (Student 4): Implement sensor listener
+     * Starts listening to proximity sensor updates.
+     * Must be called in Activity.onResume().
      *
-     * Steps:
-     * 1. Create SensorEventListener
-     * 2. Read distance value (event.values[0])
-     * 3. Determine if near or far
-     * 4. Implement debouncing to avoid rapid triggers
-     * 5. Detect state changes (near->far or far->near)
-     * 6. Call appropriate callbacks
+     * Logic:
+     *  - Reads distance from sensor
+     *  - Performs debouncing
+     *  - Detects state change (near/far)
+     *  - Calls appropriate callbacks
      */
     public void startListening() {
-        // TODO: Implement listener
+        if (sensorManager == null || proximitySensor == null) return;
 
-        /* EXAMPLE CODE:
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 float distance = event.values[0];
                 boolean currentlyNear = distance < NEAR_THRESHOLD;
 
-                // Debouncing
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastTriggerTime < DEBOUNCE_DELAY) {
-                    return;
-                }
+                long now = System.currentTimeMillis();
+                if (now - lastTriggerTime < DEBOUNCE_DELAY) return;
 
-                // Detect state change
                 if (currentlyNear != isNear) {
                     isNear = currentlyNear;
-                    lastTriggerTime = currentTime;
+                    lastTriggerTime = now;
 
-                    // Notify listeners
+                    // Global callback
                     if (onProximityChangedListener != null) {
                         onProximityChangedListener.onProximityChanged(distance, isNear);
                     }
 
+                    // Specific callbacks
                     if (isNear && onNearListener != null) {
                         onNearListener.onNear();
                     } else if (!isNear && onFarListener != null) {
@@ -131,85 +122,91 @@ public class ProximitySensor {
             public void onAccuracyChanged(Sensor sensor, int accuracy) {}
         };
 
-        if (sensorManager != null && proximitySensor != null) {
-            sensorManager.registerListener(listener, proximitySensor,
-                SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        */
+        sensorManager.registerListener(
+                listener,
+                proximitySensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+        );
     }
 
     /**
-     * TODO (Student 4): Unregister sensor listener
-     * CRITICAL: Proximity sensor can drain battery!
+     * Stops listening to sensor updates.
+     * Must be called in Activity.onPause().
+     *
+     * Critical for:
+     *  - Battery life
+     *  - Avoiding background sensor leaks
      */
     public void stopListening() {
-        // TODO: Unregister listener
-        // if (sensorManager != null && listener != null) {
-        //     sensorManager.unregisterListener(listener);
-        // }
+        if (sensorManager != null && listener != null) {
+            sensorManager.unregisterListener(listener);
+        }
     }
 
     /**
-     * Check if sensor is available
+     * @return true if proximity sensor is present
      */
     public boolean isAvailable() {
         return proximitySensor != null;
     }
 
     /**
-     * Get current proximity state
+     * @return true if last detected state is "near"
      */
     public boolean isObjectNear() {
         return isNear;
     }
 
     /**
-     * Get maximum sensor range
+     * @return maximum measurable distance in cm
      */
     public float getMaxRange() {
         return maxRange;
     }
 
     /**
-     * Set proximity change listener
+     * Sets a callback for ANY proximity change.
      */
     public void setOnProximityChangedListener(OnProximityChangedListener listener) {
         this.onProximityChangedListener = listener;
     }
 
     /**
-     * Set near detection listener
+     * Sets callback for when object becomes near.
      */
     public void setOnNearListener(OnNearListener listener) {
         this.onNearListener = listener;
     }
 
     /**
-     * Set far detection listener
+     * Sets callback for when object becomes far.
      */
     public void setOnFarListener(OnFarListener listener) {
         this.onFarListener = listener;
     }
 
+    // ============================================================
+    // Callback Interfaces
+    // ============================================================
+
     /**
-     * Callback interface for proximity changes
+     * Called on any proximity change.
      */
     public interface OnProximityChangedListener {
         void onProximityChanged(float distance, boolean isNear);
     }
 
     /**
-     * Callback interface for near detection
+     * Called when distance < NEAR_THRESHOLD.
      */
     public interface OnNearListener {
         void onNear();
     }
 
     /**
-     * Callback interface for far detection
+     * Called when distance >= NEAR_THRESHOLD.
      */
     public interface OnFarListener {
         void onFar();
     }
 }
-
