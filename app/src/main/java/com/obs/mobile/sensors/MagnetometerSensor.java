@@ -10,7 +10,7 @@ import android.hardware.SensorManager;
  * MagnetometerSensor - Independent sensor class for compass/magnetometer
  *
  * ============================================================
- * TODO (Student 5 - Magnetometer):
+ * COMPLETED - Magnetometer Implementation
  * ============================================================
  *
  * OBJECTIVE: Implement compass functionality for direction detection
@@ -95,37 +95,25 @@ public class MagnetometerSensor {
     }
 
     /**
-     * TODO (Student 5): Implement sensor initialization
+     * COMPLETED: Sensor initialization
      *
-     * Steps:
-     * 1. Get SensorManager
-     * 2. Get magnetometer (TYPE_MAGNETIC_FIELD)
-     * 3. Get accelerometer (TYPE_ACCELEROMETER) - REQUIRED for compass!
-     * 4. Check if BOTH sensors exist
+     * Initializes both magnetometer and accelerometer sensors
+     * Both are required for compass functionality
      */
     public boolean initialize() {
-        // TODO: Implement initialization
-        // sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        // magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        // accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        // return magnetometer != null && accelerometer != null;
-
-        return false; // Replace with actual implementation
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        return magnetometer != null && accelerometer != null;
     }
 
     /**
-     * TODO (Student 5): Implement sensor listeners
+     * COMPLETED: Sensor listeners implementation
      *
-     * Steps:
-     * 1. Create magnetometer listener - store values in geomagnetic[]
-     * 2. Create accelerometer listener - store values in gravity[]
-     * 3. When both have data, call calculateOrientation()
-     * 4. Register BOTH listeners
+     * Creates and registers listeners for both magnetometer and accelerometer
+     * Calculates orientation when both sensors have data
      */
     public void startListening() {
-        // TODO: Implement listeners
-
-        /* EXAMPLE CODE:
         magnetometerListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
@@ -140,6 +128,7 @@ public class MagnetometerSensor {
             public void onAccuracyChanged(Sensor sensor, int accuracy) {
                 if (accuracy == SensorManager.SENSOR_STATUS_ACCURACY_LOW) {
                     // Recommend calibration (figure-8 motion)
+                    // You can add a callback here if needed to notify the UI
                 }
             }
         };
@@ -161,39 +150,28 @@ public class MagnetometerSensor {
         if (sensorManager != null) {
             if (magnetometer != null) {
                 sensorManager.registerListener(magnetometerListener, magnetometer,
-                    SensorManager.SENSOR_DELAY_UI);
+                        SensorManager.SENSOR_DELAY_UI);
             }
             if (accelerometer != null) {
                 sensorManager.registerListener(accelerometerListener, accelerometer,
-                    SensorManager.SENSOR_DELAY_UI);
+                        SensorManager.SENSOR_DELAY_UI);
             }
         }
-        */
     }
 
     /**
-     * TODO (Student 5): Calculate compass orientation
+     * COMPLETED: Calculate compass orientation
      *
-     * Steps:
-     * 1. Check if we have both gravity and geomagnetic data
-     * 2. Use SensorManager.getRotationMatrix()
-     * 3. Use SensorManager.getOrientation()
-     * 4. Extract azimuth (orientation[0])
-     * 5. Convert radians to degrees
-     * 6. Normalize to 0-360
-     * 7. Determine direction
-     * 8. Notify listeners
+     * Combines magnetometer and accelerometer data to calculate device orientation
+     * Converts to degrees and determines compass direction
      */
     private void calculateOrientation() {
-        // TODO: Implement orientation calculation
-
-        /* EXAMPLE CODE:
         if (!hasGravity || !hasGeomagnetic) {
             return;
         }
 
         boolean success = SensorManager.getRotationMatrix(rotationMatrix, null,
-            gravity, geomagnetic);
+                gravity, geomagnetic);
 
         if (success) {
             SensorManager.getOrientation(rotationMatrix, orientation);
@@ -223,14 +201,14 @@ public class MagnetometerSensor {
                 }
             }
         }
-        */
     }
 
     /**
-     * TODO (Student 5): Convert azimuth to compass direction
+     * COMPLETED: Convert azimuth to compass direction
+     *
+     * Maps degree values to 8 compass directions
      */
     private CompassDirection getDirectionFromAzimuth(float azimuth) {
-        // TODO: Implement direction calculation
         int rounded = Math.round(azimuth);
 
         if ((rounded >= 0 && rounded < 22) || (rounded >= 338 && rounded <= 360)) {
@@ -253,18 +231,19 @@ public class MagnetometerSensor {
     }
 
     /**
-     * TODO (Student 5): Unregister BOTH sensor listeners
+     * COMPLETED: Unregister sensor listeners
+     *
+     * Cleans up listeners and resets state flags
      */
     public void stopListening() {
-        // TODO: Unregister BOTH listeners
-        // if (sensorManager != null) {
-        //     if (magnetometerListener != null) {
-        //         sensorManager.unregisterListener(magnetometerListener);
-        //     }
-        //     if (accelerometerListener != null) {
-        //         sensorManager.unregisterListener(accelerometerListener);
-        //     }
-        // }
+        if (sensorManager != null) {
+            if (magnetometerListener != null) {
+                sensorManager.unregisterListener(magnetometerListener);
+            }
+            if (accelerometerListener != null) {
+                sensorManager.unregisterListener(accelerometerListener);
+            }
+        }
 
         hasGravity = false;
         hasGeomagnetic = false;
@@ -312,4 +291,3 @@ public class MagnetometerSensor {
         void onDirectionChange(CompassDirection direction);
     }
 }
-

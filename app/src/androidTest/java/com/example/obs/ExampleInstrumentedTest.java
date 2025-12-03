@@ -1,4 +1,4 @@
-package com.obs.mobile;
+package com.example.obs;
 
 import android.content.Context;
 
