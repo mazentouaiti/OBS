@@ -6,27 +6,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-/**
- * GyroscopeSensor - Independent sensor class for gyroscope
- *
- * ============================================================
- * TODO (Student 2 - Gyroscope):
- * ============================================================
- *
- * OBJECTIVE: Detect device rotation for video stabilization and gestures
- *
- * WHAT IS A GYROSCOPE?
- * - Measures rate of rotation around 3 axes
- * - Values in radians per second (rad/s)
- * - Used for detecting rotation gestures and stabilization
- *
- * USAGE IN ACTIVITIES:
- * - Create instance: gyroscopeSensor = new GyroscopeSensor(this);
- * - Set callback: gyroscopeSensor.setOnRotationListener((x, y, z) -> { ... });
- * - Initialize: gyroscopeSensor.initialize();
- * - Start: gyroscopeSensor.startListening(); (in onResume)
- * - Stop: gyroscopeSensor.stopListening(); (in onPause)
- */
 public class GyroscopeSensor {
 
     private Context context;
@@ -38,57 +17,48 @@ public class GyroscopeSensor {
     private OnRotationListener onRotationListener;
     private OnRotationGestureListener onRotationGestureListener;
 
-    private static final float ROTATION_THRESHOLD = 1.5f; // rad/s
+    private static final float FAST_ROTATION_THRESHOLD = 100f;
+    private static final int GESTURE_TIME_THRESHOLD = 300;
+    private long lastFastRotationTime = 0;
 
-    /**
-     * Constructor
-     */
     public GyroscopeSensor(Context context) {
         this.context = context;
     }
 
-    /**
-     * TODO (Student 2): Implement sensor initialization
-     *
-     * Steps:
-     * 1. Get SensorManager
-     * 2. Get gyroscope sensor (TYPE_GYROSCOPE)
-     * 3. Check if sensor exists
-     */
     public boolean initialize() {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager == null) return false;
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         return gyroscope != null;
     }
 
-    /**
-     * TODO (Student 2): Implement sensor listener
-     *
-     * Steps:
-     * 1. Create SensorEventListener
-     * 2. Read rotation rates (event.values[0], [1], [2])
-     * 3. Convert rad/s to degrees/s if needed
-     * 4. Detect rotation gestures
-     * 5. Register with SENSOR_DELAY_GAME for fast updates
-     */
     public void startListening() {
+        if (sensorManager == null || gyroscope == null || listener != null) return;
+
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                float rotationX = event.values[0]; // Rotation around X (pitch)
-                float rotationY = event.values[1]; // Rotation around Y (roll)
-                float rotationZ = event.values[2]; // Rotation around Z (yaw)
+                float rotationX = event.values[0];
+                float rotationY = event.values[1];
+                float rotationZ = event.values[2];
+
+                // Convert to degrees per second
+                float rotationZDeg = radiansToDegrees(rotationZ);
 
                 // Notify rotation listener
                 if (onRotationListener != null) {
                     onRotationListener.onRotation(rotationX, rotationY, rotationZ);
                 }
 
-                // Detect rotation gestures
-                float rotationZDegrees = (float) Math.toDegrees(rotationZ);
-                if (Math.abs(rotationZDegrees) > 100) { // Fast rotation
-                    if (onRotationGestureListener != null) {
-                        onRotationGestureListener.onFastRotation(rotationZDegrees);
+                // Detect fast rotation gestures
+                long currentTime = System.currentTimeMillis();
+                if (Math.abs(rotationZDeg) > FAST_ROTATION_THRESHOLD) {
+                    if (currentTime - lastFastRotationTime > GESTURE_TIME_THRESHOLD) {
+                        lastFastRotationTime = currentTime;
+                        boolean clockwise = rotationZ > 0;
+                        if (onRotationGestureListener != null) {
+                            onRotationGestureListener.onFastRotation(rotationZDeg, clockwise);
+                        }
                     }
                 }
             }
@@ -97,60 +67,39 @@ public class GyroscopeSensor {
             public void onAccuracyChanged(Sensor sensor, int accuracy) {}
         };
 
-        if (sensorManager != null && gyroscope != null) {
-            sensorManager.registerListener(listener, gyroscope,
-                SensorManager.SENSOR_DELAY_GAME);
-        }
+        sensorManager.registerListener(listener, gyroscope, SensorManager.SENSOR_DELAY_GAME);
     }
 
-    /**
-     * TODO (Student 2): Unregister sensor listener
-     */
     public void stopListening() {
         if (sensorManager != null && listener != null) {
             sensorManager.unregisterListener(listener);
+            listener = null;
         }
     }
 
-    /**
-     * Check if sensor is available
-     */
     public boolean isAvailable() {
         return gyroscope != null;
     }
 
-    /**
-     * Convert radians per second to degrees per second
-     */
     public static float radiansToDegrees(float radians) {
         return (float) Math.toDegrees(radians);
     }
 
-    /**
-     * Set rotation data listener
-     */
     public void setOnRotationListener(OnRotationListener listener) {
         this.onRotationListener = listener;
     }
 
-    /**
-     * Set rotation gesture listener
-     */
     public void setOnRotationGestureListener(OnRotationGestureListener listener) {
         this.onRotationGestureListener = listener;
     }
 
-    /**
-     * Callback interface for rotation data
-     */
     public interface OnRotationListener {
         void onRotation(float rotationX, float rotationY, float rotationZ);
     }
 
-    /**
-     * Callback interface for rotation gestures
-     */
     public interface OnRotationGestureListener {
-        void onFastRotation(float degrees);
+        void onFastRotation(float degreesPerSecond, boolean clockwise);
+        // OR if you want to keep speed:
+        // void onFastRotation(float degreesPerSecond, boolean clockwise, float speed);
     }
 }

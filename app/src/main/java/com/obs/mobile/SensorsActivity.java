@@ -1,7 +1,11 @@
 package com.obs.mobile;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -16,12 +20,10 @@ import com.obs.mobile.sensors.ProximitySensor;
 import com.obs.mobile.sensors.MagnetometerSensor;
 import com.obs.mobile.utils.SensorPreferences;
 
+import java.util.Locale;
+
 /**
  * SensorsActivity - Sensor Settings and Monitoring Screen
- *
- * This screen displays sensor status and allows configuration.
- * Now uses independent sensor classes - students implement the classes,
- * then use switches here to enable/disable and monitor data.
  */
 public class SensorsActivity extends AppCompatActivity {
 
@@ -32,7 +34,7 @@ public class SensorsActivity extends AppCompatActivity {
     private ProximitySensor proximitySensor;
     private MagnetometerSensor magnetometerSensor;
 
-    // Placeholder switches for each sensor
+    // Switches for each sensor
     private Switch switchAccelerometer;
     private Switch switchGyroscope;
     private Switch switchLight;
@@ -45,6 +47,11 @@ public class SensorsActivity extends AppCompatActivity {
     private TextView tvLightData;
     private TextView tvProximityData;
     private TextView tvMagnetData;
+    private TextView tvHeader;
+
+    private boolean autoBrightnessEnabled = false;
+
+    private static final String TAG = "SensorsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +74,9 @@ public class SensorsActivity extends AppCompatActivity {
 
         // Setup listeners
         setupSensorSwitches();
+
+        // Update header with sensor availability
+        updateHeader();
     }
 
     /**
@@ -86,10 +96,46 @@ public class SensorsActivity extends AppCompatActivity {
         tvLightData = findViewById(R.id.tv_light_data);
         tvProximityData = findViewById(R.id.tv_proximity_data);
         tvMagnetData = findViewById(R.id.tv_magnet_data);
+        tvHeader = findViewById(R.id.tv_header);
 
-        // Restore saved gyroscope state
-        boolean isGyroEnabled = SensorPreferences.isGyroscopeEnabled(this);
-        switchGyroscope.setChecked(isGyroEnabled);
+        // Restore saved sensor states from preferences
+        restoreSensorStates();
+    }
+
+    /**
+     * Restore sensor states from preferences
+     */
+    private void restoreSensorStates() {
+        // All sensors should start DISABLED
+        switchAccelerometer.setChecked(false);
+        switchGyroscope.setChecked(false);
+        switchLight.setChecked(false);
+        switchProximity.setChecked(false);
+        switchMagnetometer.setChecked(false);
+
+        // Save the disabled state to preferences
+        SensorPreferences.setAccelerometerEnabled(this, false);
+        SensorPreferences.setGyroscopeEnabled(this, false);
+        SensorPreferences.setLightSensorEnabled(this, false);
+        SensorPreferences.setProximityEnabled(this, false);
+        SensorPreferences.setMagnetometerEnabled(this, false);
+
+        // Send initial broadcasts to ensure CameraActivity knows all sensors are disabled
+        sendSensorBroadcast("accelerometer", false);
+        sendSensorBroadcast("gyroscope", false);
+        sendSensorBroadcast("light", false);
+        sendSensorBroadcast("proximity", false);
+        sendSensorBroadcast("magnetometer", false);
+    }
+
+    /**
+     * Send broadcast to CameraActivity about sensor state change
+     */
+    private void sendSensorBroadcast(String sensorType, boolean isEnabled) {
+        Intent intent = new Intent("com.obs.mobile.SENSOR_STATE_CHANGED");
+        intent.putExtra("sensor_type", sensorType);
+        intent.putExtra("is_enabled", isEnabled);
+        sendBroadcast(intent);
     }
 
     /**
@@ -104,178 +150,284 @@ public class SensorsActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup sensor enable/disable switches
+     * Update header with sensor availability info
+     */
+    private void updateHeader() {
+        int enabledCount = SensorPreferences.getEnabledSensorCount(this);
+        int availableCount = getAvailableSensorCount();
+
+        String headerText = String.format(Locale.US,
+                "Sensor Dashboard\nEnabled: %d/%d | Available: %d/5",
+                enabledCount, 5, availableCount);
+
+        tvHeader.setText(headerText);
+    }
+
+    /**
+     * Count how many sensors are available on this device
+     */
+    private int getAvailableSensorCount() {
+        int count = 0;
+        if (accelerometerSensor.isAvailable()) count++;
+        if (gyroscopeSensor.isAvailable()) count++;
+        if (lightSensor.isAvailable()) count++;
+        if (proximitySensor.isAvailable()) count++;
+        if (magnetometerSensor.isAvailable()) count++;
+        return count;
+    }
+
+    /**
+     * Setup sensor enable/disable switches with complete implementations
      */
     private void setupSensorSwitches() {
-        /* TODO (Student 1 - Accelerometer):
-         * ===================================
-         * Implement accelerometer switch functionality
-         *
-         * When switch is ON:
-         * - Initialize sensor
-         * - Set data listener to update tvAccelData
-         * - Start listening
-         *
-         * When switch is OFF:
-         * - Stop listening
-         */
+        // Accelerometer - Student 1
         switchAccelerometer.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SensorPreferences.setAccelerometerEnabled(this, isChecked);
+
+            // Send broadcast to CameraActivity
+            sendSensorBroadcast("accelerometer", isChecked);
+
             if (isChecked) {
                 if (accelerometerSensor.initialize()) {
-                    // Set callback to display data
+                    // Set shake detection callback
+                    accelerometerSensor.setOnShakeListener(intensity -> {
+                        runOnUiThread(() -> {
+                            String shakeMsg = String.format(Locale.US,
+                                    "SHAKE DETECTED! Intensity: %.2f m/s²", intensity);
+                            tvAccelData.setText(shakeMsg);
+                        });
+                    });
+
+                    // Set data changed callback
                     accelerometerSensor.setOnDataChangedListener(
-                        new AccelerometerSensor.OnDataChangedListener() {
-                            @Override
-                            public void onDataChanged(float x, float y, float z, float magnitude) {
+                            (x, y, z, magnitude) -> {
                                 runOnUiThread(() -> {
-                                    String data = String.format("X: %.2f | Y: %.2f | Z: %.2f\nMagnitude: %.2f m/s²",
-                                        x, y, z, magnitude);
+                                    String data = String.format(Locale.US,
+                                            "X: %.2f | Y: %.2f | Z: %.2f m/s²\n" +
+                                                    "Magnitude: %.2f m/s²",
+                                            x, y, z, magnitude);
                                     tvAccelData.setText(data);
                                 });
                             }
-                        }
                     );
                     accelerometerSensor.startListening();
-                    tvAccelData.setText("Accelerometer: Active - Waiting for data...");
+                    tvAccelData.setText("Accelerometer: Active\nShake to test!");
                 } else {
-                    tvAccelData.setText("Accelerometer: Not available on this device");
+                    tvAccelData.setText("Accelerometer: Not available");
                     switchAccelerometer.setChecked(false);
+                    // Send correction broadcast
+                    sendSensorBroadcast("accelerometer", false);
                 }
             } else {
-                accelerometerSensor.stopListening();
+                if (accelerometerSensor != null) {
+                    accelerometerSensor.stopListening();
+                }
                 tvAccelData.setText("Accelerometer: Disabled");
             }
+            updateHeader();
         });
 
-        /* TODO (Student 2 - Gyroscope):
-         * ===============================
-         * Implement gyroscope switch functionality
-         */
+        // Gyroscope - Student 2
         switchGyroscope.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SensorPreferences.setGyroscopeEnabled(this, isChecked);
+
+            // Send broadcast to CameraActivity
+            sendSensorBroadcast("gyroscope", isChecked);
+
             if (isChecked) {
                 if (gyroscopeSensor.initialize()) {
-                    gyroscopeSensor.setOnRotationListener(
-                        new GyroscopeSensor.OnRotationListener() {
-                            @Override
-                            public void onRotation(float rotationX, float rotationY, float rotationZ) {
+                    // Set rotation gesture callback
+                    gyroscopeSensor.setOnRotationGestureListener(
+                            (degreesPerSecond, clockwise) -> {
                                 runOnUiThread(() -> {
-                                    String data = String.format("X: %.2f rad/s | Y: %.2f rad/s | Z: %.2f rad/s",
-                                        rotationX, rotationY, rotationZ);
+                                    String direction = clockwise ? "Clockwise" : "Counter-clockwise";
+                                    String gestureMsg = String.format(Locale.US,
+                                            "FAST ROTATION!\nSpeed: %.1f°/s (%s)",
+                                            degreesPerSecond, direction);
+                                    tvGyroData.setText(gestureMsg);
+                                });
+                            }
+                    );
+
+                    // Set rotation data callback
+                    gyroscopeSensor.setOnRotationListener(
+                            (rotationX, rotationY, rotationZ) -> {
+                                runOnUiThread(() -> {
+                                    float xDeg = GyroscopeSensor.radiansToDegrees(rotationX);
+                                    float yDeg = GyroscopeSensor.radiansToDegrees(rotationY);
+                                    float zDeg = GyroscopeSensor.radiansToDegrees(rotationZ);
+
+                                    String data = String.format(Locale.US,
+                                            "X: %.1f°/s\nY: %.1f°/s\nZ: %.1f°/s",
+                                            xDeg, yDeg, zDeg);
                                     tvGyroData.setText(data);
                                 });
                             }
-                        }
                     );
                     gyroscopeSensor.startListening();
-                    tvGyroData.setText("Gyroscope: Active - Waiting for data...");
+                    tvGyroData.setText("Gyroscope: Active\nRotate to test!");
                 } else {
-                    tvGyroData.setText("Gyroscope: Not available on this device");
+                    tvGyroData.setText("Gyroscope: Not available");
                     switchGyroscope.setChecked(false);
+                    // Send correction broadcast
+                    sendSensorBroadcast("gyroscope", false);
                 }
             } else {
-                gyroscopeSensor.stopListening();
+                if (gyroscopeSensor != null) {
+                    gyroscopeSensor.stopListening();
+                }
                 tvGyroData.setText("Gyroscope: Disabled");
             }
-
-            // Save the state of the gyroscope switch
-            SensorPreferences.setGyroscopeEnabled(this, isChecked);
+            updateHeader();
         });
 
-        /* TODO (Student 3 - Light Sensor):
-         * ==================================
-         * Implement light sensor switch functionality
-         */
+        // Light Sensor - Student 3
         switchLight.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SensorPreferences.setLightSensorEnabled(this, isChecked);
+
+            // Send broadcast to CameraActivity
+            sendSensorBroadcast("light", isChecked);
+
             if (isChecked) {
                 if (lightSensor.initialize()) {
                     lightSensor.setOnLightChangedListener(
-                        new LightSensor.OnLightChangedListener() {
-                            @Override
-                            public void onLightChanged(float lux, LightSensor.LightCategory category) {
+                            (lux, category) -> {
                                 runOnUiThread(() -> {
-                                    String data = String.format("Light: %.0f lux\nCategory: %s (%s)",
-                                        lux, category.getName(), category.getRange());
+                                    String recommendation = lightSensor.getCameraRecommendation(lux);
+                                    String data = String.format(Locale.US,
+                                            "Light: %.0f lux\n" +
+                                                    "Category: %s\n" +
+                                                    "Recommendation: %s",
+                                            lux, category.getName(), recommendation);
                                     tvLightData.setText(data);
+
+                                    // Auto-adjust brightness based on light level
+                                    if (autoBrightnessEnabled) {
+                                        adjustScreenBrightness(lux);
+                                    }
                                 });
                             }
-                        }
                     );
                     lightSensor.startListening();
-                    tvLightData.setText("Light Sensor: Active - Waiting for data...");
+                    autoBrightnessEnabled = true;
+                    tvLightData.setText("Light Sensor: Active\nMove to test!");
                 } else {
-                    tvLightData.setText("Light Sensor: Not available on this device");
+                    tvLightData.setText("Light Sensor: Not available");
                     switchLight.setChecked(false);
+                    // Send correction broadcast
+                    sendSensorBroadcast("light", false);
+                    autoBrightnessEnabled = false;
                 }
             } else {
-                lightSensor.stopListening();
+                if (lightSensor != null) {
+                    lightSensor.stopListening();
+                }
                 tvLightData.setText("Light Sensor: Disabled");
+                autoBrightnessEnabled = false;
+                // Reset brightness when disabled
+                resetScreenBrightness();
             }
+            updateHeader();
         });
 
-        /* TODO (Student 4 - Proximity Sensor):
-         * ======================================
-         * Implement proximity sensor switch functionality
-         */
+        // Proximity Sensor - Student 4
         switchProximity.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SensorPreferences.setProximityEnabled(this, isChecked);
+
+            // Send broadcast to CameraActivity
+            sendSensorBroadcast("proximity", isChecked);
+
             if (isChecked) {
                 if (proximitySensor.initialize()) {
                     proximitySensor.setOnProximityChangedListener(
-                        new ProximitySensor.OnProximityChangedListener() {
-                            @Override
-                            public void onProximityChanged(float distance, boolean isNear) {
+                            (distance, isNear) -> {
                                 runOnUiThread(() -> {
                                     String state = isNear ? "NEAR" : "FAR";
-                                    String data = String.format("Distance: %.1f cm\nState: %s",
-                                        distance, state);
+                                    String data = String.format(Locale.US,
+                                            "Distance: %.1f cm\n" +
+                                                    "State: %s",
+                                            distance, state);
                                     tvProximityData.setText(data);
                                 });
                             }
-                        }
                     );
+
+                    proximitySensor.setOnNearListener(() -> {
+                        runOnUiThread(() -> {
+                            tvProximityData.setText("OBJECT NEAR!\n" + tvProximityData.getText());
+                        });
+                    });
+
+                    proximitySensor.setOnFarListener(() -> {
+                        runOnUiThread(() -> {
+                            tvProximityData.setText("OBJECT FAR!\n" + tvProximityData.getText());
+                        });
+                    });
+
                     proximitySensor.startListening();
-                    tvProximityData.setText("Proximity: Active - Waiting for data...");
+                    tvProximityData.setText("Proximity: Active\nCover sensor\n⭐ Auto-focus enabled in Camera");
                 } else {
-                    tvProximityData.setText("Proximity: Not available on this device");
+                    tvProximityData.setText("Proximity: Not available");
                     switchProximity.setChecked(false);
+                    // Send correction broadcast
+                    sendSensorBroadcast("proximity", false);
                 }
             } else {
-                proximitySensor.stopListening();
+                if (proximitySensor != null) {
+                    proximitySensor.stopListening();
+                }
                 tvProximityData.setText("Proximity: Disabled");
             }
+            updateHeader();
         });
 
-        /* TODO (Student 5 - Magnetometer):
-         * ==================================
-         * Implement magnetometer switch functionality
-         */
+        // Magnetometer - Student 5
         switchMagnetometer.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SensorPreferences.setMagnetometerEnabled(this, isChecked);
+
+            // Send broadcast to CameraActivity
+            sendSensorBroadcast("magnetometer", isChecked);
+
             if (isChecked) {
                 if (magnetometerSensor.initialize()) {
                     magnetometerSensor.setOnCompassChangeListener(
-                        new MagnetometerSensor.OnCompassChangeListener() {
-                            @Override
-                            public void onCompassChange(float azimuth,
-                                                       MagnetometerSensor.CompassDirection direction) {
+                            (azimuth, direction) -> {
                                 runOnUiThread(() -> {
-                                    String data = String.format("Direction: %s (%s)\nAzimuth: %.0f°",
-                                        direction.getName(),
-                                        direction.getAbbreviation(),
-                                        azimuth);
+                                    String data = String.format(Locale.US,
+                                            "Direction: %s (%s)\n" +
+                                                    "Azimuth: %.0f°",
+                                            direction.getName(),
+                                            direction.getAbbreviation(),
+                                            azimuth);
                                     tvMagnetData.setText(data);
                                 });
                             }
-                        }
                     );
+
+                    magnetometerSensor.setOnDirectionChangeListener(direction -> {
+                        runOnUiThread(() -> {
+                            String dirMsg = String.format(Locale.US,
+                                    "New Direction: %s",
+                                    direction.getName());
+                            tvMagnetData.setText(dirMsg);
+                        });
+                    });
+
                     magnetometerSensor.startListening();
-                    tvMagnetData.setText("Magnetometer: Active - Waiting for data...");
+                    tvMagnetData.setText("Magnetometer: Active\nMove to test!");
                 } else {
-                    tvMagnetData.setText("Magnetometer: Not available on this device");
+                    tvMagnetData.setText("Magnetometer: Not available");
                     switchMagnetometer.setChecked(false);
+                    // Send correction broadcast
+                    sendSensorBroadcast("magnetometer", false);
                 }
             } else {
-                magnetometerSensor.stopListening();
+                if (magnetometerSensor != null) {
+                    magnetometerSensor.stopListening();
+                }
                 tvMagnetData.setText("Magnetometer: Disabled");
             }
+            updateHeader();
         });
     }
 
@@ -283,6 +435,21 @@ public class SensorsActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         // Stop all active sensors
+        stopAllSensors();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Restart sensors based on switch states
+        restartSensors();
+        updateHeader();
+    }
+
+    /**
+     * Stop all active sensors
+     */
+    private void stopAllSensors() {
         if (switchAccelerometer.isChecked() && accelerometerSensor != null) {
             accelerometerSensor.stopListening();
         }
@@ -300,10 +467,10 @@ public class SensorsActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Restart sensors based on switch states
+    /**
+     * Restart sensors based on switch states
+     */
+    private void restartSensors() {
         if (switchAccelerometer.isChecked() && accelerometerSensor != null) {
             accelerometerSensor.startListening();
         }
@@ -328,5 +495,71 @@ public class SensorsActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Adjust screen brightness based on ambient light level
+     * Converts lux values to brightness level (0.0 - 1.0)
+     */
+    private void adjustScreenBrightness(float lux) {
+        try {
+            // Map lux values to brightness level
+            // 0 lux -> 0.2 brightness (minimum readable)
+            // 100 lux -> 0.5 brightness
+            // 1000 lux -> 0.8 brightness
+            // 10000+ lux -> 1.0 brightness (maximum)
+
+            float brightnessLevel;
+
+            if (lux <= 0) {
+                brightnessLevel = 0.2f;
+            } else if (lux <= 100) {
+                // Linear interpolation from 0.2 to 0.5
+                brightnessLevel = 0.2f + (lux / 100f) * 0.3f;
+            } else if (lux <= 1000) {
+                // Linear interpolation from 0.5 to 0.8
+                brightnessLevel = 0.5f + ((lux - 100) / 900f) * 0.3f;
+            } else if (lux <= 10000) {
+                // Linear interpolation from 0.8 to 1.0
+                brightnessLevel = 0.8f + ((lux - 1000) / 9000f) * 0.2f;
+            } else {
+                // Maximum brightness
+                brightnessLevel = 1.0f;
+            }
+
+            // Clamp brightness between 0.2 and 1.0
+            brightnessLevel = Math.max(0.2f, Math.min(1.0f, brightnessLevel));
+
+            // Apply brightness to window
+            Window window = getWindow();
+            if (window != null) {
+                WindowManager.LayoutParams layoutParams = window.getAttributes();
+                layoutParams.screenBrightness = brightnessLevel;
+                window.setAttributes(layoutParams);
+
+                Log.d(TAG, String.format(Locale.US,
+                    "Auto Brightness: %.0f lux -> %.2f brightness", lux, brightnessLevel));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error adjusting brightness: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Reset screen brightness to system default
+     */
+    private void resetScreenBrightness() {
+        try {
+            Window window = getWindow();
+            if (window != null) {
+                WindowManager.LayoutParams layoutParams = window.getAttributes();
+                // Set to -1 to use system brightness
+                layoutParams.screenBrightness = -1f;
+                window.setAttributes(layoutParams);
+                Log.d(TAG, "Screen brightness reset to system default");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error resetting brightness: " + e.getMessage());
+        }
     }
 }

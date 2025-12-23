@@ -1,0 +1,131 @@
+🔧 FIX FOR PHONE NOT WORKING - INTEGRATION STEPS
+
+The Android app is now fully integrated with the Python system. To make it work on your phone:
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: GET YOUR COMPUTER IP
+───────────────────────────────────────────────────────────────────────────────
+
+On Linux/Mac (terminal):
+  $ hostname -I
+
+Example output: 192.168.1.100
+
+On Windows (command prompt):
+  > ipconfig
+  Look for "IPv4 Address" under your network adapter
+
+STEP 2: FIND THE IP IN CameraActivity.java
+───────────────────────────────────────────────────────────────────────────────
+
+Line 145 in CameraActivity.java:
+  sensorDataStreamer.initialize("192.168.1.100", 5000);
+                                ^^^^^^^^^^^^^^
+                                Replace with YOUR computer IP!
+
+STEP 3: UPDATE THE IP ADDRESS
+───────────────────────────────────────────────────────────────────────────────
+
+Replace "192.168.1.100" with YOUR actual IP address.
+
+Example - if your IP is 192.168.0.50:
+  sensorDataStreamer.initialize("192.168.0.50", 5000);
+
+STEP 4: REBUILD AND RUN THE APP
+───────────────────────────────────────────────────────────────────────────────
+
+1. In Android Studio:
+   Build → Clean Project
+   Build → Rebuild Project
+
+2. Run the app on your phone:
+   Run → Run 'app'
+
+3. Make sure:
+   - Phone is on SAME WiFi as computer
+   - Firewall allows UDP port 5000
+   - Python sensor_receiver is running
+
+STEP 5: START PYTHON RECEIVER
+───────────────────────────────────────────────────────────────────────────────
+
+On computer terminal:
+  $ python3 sensor_receiver.py
+
+You should see:
+  ✅ Sensor server listening on 0.0.0.0:5000
+  💻 Your computer IP: 192.168.1.100
+
+STEP 6: TEST IN THE APP
+───────────────────────────────────────────────────────────────────────────────
+
+1. Open Sensors Settings on phone
+2. Enable sensors (Accelerometer, Gyroscope, Light, Proximity, Magnetometer)
+3. Check Python terminal - you should see:
+   📡 Received sensor data from <phone_ip>
+
+THAT'S IT! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT'S NOW WORKING:
+
+✅ CameraActivity sends sensor data to Python
+✅ All 5 sensors stream in real-time:
+   - Accelerometer (X, Y, Z, magnitude)
+   - Gyroscope (rotation)
+   - Light Sensor (lux + category)
+   - Proximity (distance + state)
+   - Magnetometer (azimuth + direction)
+
+✅ Python receives and displays data
+✅ Auto-brightness works
+✅ Auto-focus on proximity works
+✅ Face detection with emotions (Python side)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK TEST:
+
+1. Terminal 1 (Computer):
+   $ cd /home/mazen/StudioProjects/OBS
+   $ python3 sensor_receiver.py
+
+2. Terminal 2 (Computer):
+   $ python3 face_emotion_detection.py --demo
+
+3. Phone:
+   - Open app
+   - Go to Sensors Settings
+   - Enable sensors
+   - Watch data flow in Python!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING:
+
+❌ "Connection refused" in Python
+   → Check IP address is correct
+   → Check phone is on same WiFi
+   → Check firewall allows port 5000
+
+❌ "No data received" in Python
+   → Check sensors are enabled in app
+   → Check app was rebuilt with new IP
+   → Check network cable/WiFi is connected
+
+❌ App crashes on startup
+   → Make sure INTERNET permission was added to manifest
+   → Check SensorDataStreamer.java is in correct folder
+   → Rebuild project
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Files Modified:
+  ✅ CameraActivity.java - Added sensor streaming
+  ✅ SensorDataStreamer.java - Android sensor broadcaster
+  ✅ AndroidManifest.xml - Added INTERNET permission
+
+Everything else is ready to go! 🚀
+

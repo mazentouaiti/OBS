@@ -6,33 +6,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-/**
- * LightSensor - Independent sensor class for ambient light detection
- *
- * ============================================================
- * TODO (Student 3 - Light Sensor):
- * ============================================================
- *
- * OBJECTIVE: Measure ambient light for auto-adjusting camera settings
- *
- * WHAT IS A LIGHT SENSOR?
- * - Measures ambient light illuminance in lux
- * - Helps adapt camera to lighting conditions
- *
- * LIGHT CATEGORIES:
- * - VERY_DARK: 0-10 lux (moonlight)
- * - DARK: 10-50 lux (candle, low light)
- * - NORMAL: 50-500 lux (indoor lighting)
- * - BRIGHT: 500-10000 lux (outdoor shade)
- * - VERY_BRIGHT: 10000+ lux (direct sunlight)
- *
- * USAGE IN ACTIVITIES:
- * - Create instance: lightSensor = new LightSensor(this);
- * - Set callback: lightSensor.setOnLightChangedListener((lux, category) -> { ... });
- * - Initialize: lightSensor.initialize();
- * - Start: lightSensor.startListening(); (in onResume)
- * - Stop: lightSensor.stopListening(); (in onPause)
- */
 public class LightSensor {
 
     private Context context;
@@ -40,18 +13,13 @@ public class LightSensor {
     private Sensor lightSensor;
     private SensorEventListener listener;
 
-    // Callbacks
     private OnLightChangedListener onLightChangedListener;
 
-    // Light level thresholds
     private static final float VERY_DARK_THRESHOLD = 10f;
     private static final float DARK_THRESHOLD = 50f;
     private static final float NORMAL_THRESHOLD = 500f;
     private static final float BRIGHT_THRESHOLD = 10000f;
 
-    /**
-     * Light level categories
-     */
     public enum LightCategory {
         VERY_DARK("Very Dark", "0-10 lux"),
         DARK("Dark", "10-50 lux"),
@@ -71,47 +39,25 @@ public class LightSensor {
         public String getRange() { return range; }
     }
 
-    /**
-     * Constructor
-     */
     public LightSensor(Context context) {
         this.context = context;
     }
 
-    /**
-     * TODO (Student 3): Implement sensor initialization
-     *
-     * Steps:
-     * 1. Get SensorManager
-     * 2. Get light sensor (TYPE_LIGHT)
-     * 3. Check if sensor exists
-     */
     public boolean initialize() {
-        // TODO: Implement initialization
-        // sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        // lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        // return lightSensor != null;
-
-        return false; // Replace with actual implementation
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager == null) return false;
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        return lightSensor != null;
     }
 
-    /**
-     * TODO (Student 3): Implement sensor listener
-     *
-     * Steps:
-     * 1. Create SensorEventListener
-     * 2. Read lux value (event.values[0])
-     * 3. Categorize light level
-     * 4. Notify listener with lux and category
-     * 5. Use SENSOR_DELAY_NORMAL (light changes slowly)
-     */
     public void startListening() {
-        // TODO: Implement listener
+        if (sensorManager == null || lightSensor == null || listener != null) return;
 
-        /* EXAMPLE CODE:
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
+                if (event.values == null || event.values.length == 0) return;
+
                 float lux = event.values[0];
                 LightCategory category = categorizeLightLevel(lux);
 
@@ -124,28 +70,17 @@ public class LightSensor {
             public void onAccuracyChanged(Sensor sensor, int accuracy) {}
         };
 
-        if (sensorManager != null && lightSensor != null) {
-            sensorManager.registerListener(listener, lightSensor,
-                SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        */
+        sensorManager.registerListener(listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    /**
-     * TODO (Student 3): Unregister sensor listener
-     */
     public void stopListening() {
-        // TODO: Unregister listener
-        // if (sensorManager != null && listener != null) {
-        //     sensorManager.unregisterListener(listener);
-        // }
+        if (sensorManager != null && listener != null) {
+            sensorManager.unregisterListener(listener);
+            listener = null;
+        }
     }
 
-    /**
-     * TODO (Student 3): Categorize light level based on lux value
-     */
     private LightCategory categorizeLightLevel(float lux) {
-        // TODO: Implement categorization
         if (lux < VERY_DARK_THRESHOLD) {
             return LightCategory.VERY_DARK;
         } else if (lux < DARK_THRESHOLD) {
@@ -159,42 +94,27 @@ public class LightSensor {
         }
     }
 
-    /**
-     * Get camera recommendation based on light level
-     */
     public String getCameraRecommendation(float lux) {
-        if (lux < VERY_DARK_THRESHOLD) {
-            return "Enable night mode - Very low light";
-        } else if (lux < DARK_THRESHOLD) {
-            return "Low light detected - Increase ISO";
-        } else if (lux < NORMAL_THRESHOLD) {
-            return "Good lighting conditions";
-        } else if (lux < BRIGHT_THRESHOLD) {
-            return "Bright conditions - Good for recording";
-        } else {
-            return "Very bright - Reduce exposure";
+        LightCategory category = categorizeLightLevel(lux);
+        switch (category) {
+            case VERY_DARK: return "Enable night mode";
+            case DARK: return "Increase ISO";
+            case NORMAL: return "Good indoor lighting";
+            case BRIGHT: return "Optimal conditions";
+            case VERY_BRIGHT: return "Reduce exposure";
+            default: return "Normal mode";
         }
     }
 
-    /**
-     * Check if sensor is available
-     */
     public boolean isAvailable() {
         return lightSensor != null;
     }
 
-    /**
-     * Set light change listener
-     */
     public void setOnLightChangedListener(OnLightChangedListener listener) {
         this.onLightChangedListener = listener;
     }
 
-    /**
-     * Callback interface for light changes
-     */
     public interface OnLightChangedListener {
         void onLightChanged(float lux, LightCategory category);
     }
 }
-

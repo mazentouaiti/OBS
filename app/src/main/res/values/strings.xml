@@ -1,30 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OBS Mobile</string>
-
-    <!-- Activity Titles -->
-    <string name="camera_title">Camera</string>
-    <string name="sensors_title">Sensors</string>
-    <string name="main_menu_title">Main Menu</string>
-
-    <!-- Camera Activity -->
-    <string name="permission_already_granted">Camera permission granted</string>
     <string name="camera_permission_granted">Camera permission granted</string>
     <string name="camera_permission_missing">Camera permission required</string>
+    <string name="permission_already_granted">Camera ready</string>
     <string name="camera_opened">Camera opened</string>
     <string name="camera_disconnected">Camera disconnected</string>
     <string name="camera_error">Camera error: %d</string>
-    <string name="btn_record">Record</string>
-    <string name="btn_stop_record">Stop</string>
+    <string name="btn_record">Start Recording</string>
+    <string name="btn_stop_record">Stop Recording</string>
+    <string name="live_indicator">● LIVE</string>
 
-    <!-- Floating Camera -->
-    <string name="live_indicator">📹 LIVE</string>
+    <!-- Sensor messages -->
+    <string name="sensor_not_available">Not available</string>
+    <string name="sensor_disabled">Disabled</string>
+    <string name="sensor_active">Active</string>
+    <string name="gyroscope_disabled">Gyroscope: Disabled</string>
+    <string name="accelerometer_disabled">Accelerometer: Disabled</string>
+    <string name="light_sensor_disabled">Light Sensor: Disabled</string>
+    <string name="proximity_disabled">Proximity: Disabled</string>
+    <string name="magnetometer_disabled">Magnetometer: Disabled</string>
 
-    <!-- Gyroscope Toggle -->
-    <string name="btn_gyro_enable">Gyro ON</string>
-    <string name="btn_gyro_disable">Gyro OFF</string>
+    <!-- Error messages -->
+    <string name="error_camera_not_available">Camera not available</string>
+    <string name="error_sensor_not_available">Sensor not available</string>
 
-    <!-- Common -->
-    <string name="close">Close</string>
-    <string name="resize">Resize</string>
+    <!-- Floating window -->
+    <string name="floating_camera_active">Floating Camera Active</string>
+    <string name="floating_window_visible">Floating window should be visible</string>
+
+    <!-- Dialog messages -->
+    <string name="exit_dialog_title">Exit OBS Mobile</string>
+    <string name="exit_dialog_message">Are you sure you want to exit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <!-- Permission messages -->
+    <string name="permission_required">Permission Required</string>
+    <string name="overlay_permission_message">Floating camera needs permission to display over other apps</string>
+    <string name="grant">Grant</string>
+    <string name="cancel">Cancel</string>
 </resources>

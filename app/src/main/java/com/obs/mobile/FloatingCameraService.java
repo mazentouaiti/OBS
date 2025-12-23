@@ -525,7 +525,7 @@ public class FloatingCameraService extends Service {
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Floating Camera Active")
-            .setContentText("Window should now be visible!")
+            .setContentText("Floating window should be visible")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)

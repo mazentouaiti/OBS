@@ -5,6 +5,9 @@
     <!-- Camera permission -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Network permission for sensor data streaming to Python -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Optional: For recording audio with video -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -66,10 +69,6 @@
             android:name="com.obs.mobile.SensorsActivity"
             android:exported="false" />
 
-        <!-- Scenes Activity -->
-        <activity
-            android:name="com.obs.mobile.ScenesActivity"
-            android:exported="false" />
 
         <!-- Floating Camera Service -->
         <service

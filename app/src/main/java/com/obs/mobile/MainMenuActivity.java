@@ -25,7 +25,7 @@ public class MainMenuActivity extends AppCompatActivity {
 
     private Button btnCamera;
     private Button btnSensors;
-    private Button btnScenes;
+
     private Button btnExit;
 
     @Override
@@ -61,7 +61,6 @@ public class MainMenuActivity extends AppCompatActivity {
     private void initializeViews() {
         btnCamera = findViewById(R.id.btn_camera);
         btnSensors = findViewById(R.id.btn_sensors);
-        btnScenes = findViewById(R.id.btn_scenes);
         btnExit = findViewById(R.id.btn_exit);
     }
 
@@ -78,12 +77,6 @@ public class MainMenuActivity extends AppCompatActivity {
         // Sensors button - Navigate to Sensor Settings
         btnSensors.setOnClickListener(v -> {
             Intent intent = new Intent(MainMenuActivity.this, SensorsActivity.class);
-            startActivity(intent);
-        });
-
-        // Scenes button - Navigate to Scenes Screen
-        btnScenes.setOnClickListener(v -> {
-            Intent intent = new Intent(MainMenuActivity.this, ScenesActivity.class);
             startActivity(intent);
         });
 
