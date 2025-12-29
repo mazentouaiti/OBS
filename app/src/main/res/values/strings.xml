@@ -10,6 +10,8 @@
     <string name="btn_record">Start Recording</string>
     <string name="btn_stop_record">Stop Recording</string>
     <string name="live_indicator">● LIVE</string>
+    <!-- Add these to your strings.xml -->
+
 
     <!-- Sensor messages -->
     <string name="sensor_not_available">Not available</string>

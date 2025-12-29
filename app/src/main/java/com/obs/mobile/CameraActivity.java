@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.Window;
@@ -27,6 +28,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +49,9 @@ import com.obs.mobile.sensors.ProximitySensor;
 import com.obs.mobile.sensors.MagnetometerSensor;
 import com.obs.mobile.utils.SensorPreferences;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -233,19 +237,21 @@ public class CameraActivity extends AppCompatActivity {
      * Find existing overlays from XML layout
      */
     private void findOrCreateOverlays() {
-        // Find overlays from XML layout (only gyroscope is defined in XML)
+        // Find all overlays from XML layout
         gyroscopeOverlay = findViewById(R.id.gyroscope_overlay);
         tvGyroData = findViewById(R.id.tv_gyro_data);
 
-        // Other sensor overlays are not defined in XML to keep layout simple
-        accelerometerOverlay = null;
-        lightOverlay = null;
-        proximityOverlay = null;
-        magnetometerOverlay = null;
-        tvAccelData = null;
-        tvLightData = null;
-        tvProximityData = null;
-        tvMagnetData = null;
+        accelerometerOverlay = findViewById(R.id.accelerometer_overlay);
+        tvAccelData = findViewById(R.id.tv_accel_data);
+
+        lightOverlay = findViewById(R.id.light_overlay);
+        tvLightData = findViewById(R.id.tv_light_data);
+
+        proximityOverlay = findViewById(R.id.proximity_overlay);
+        tvProximityData = findViewById(R.id.tv_proximity_data);
+
+        magnetometerOverlay = findViewById(R.id.magnetometer_overlay);
+        tvMagnetData = findViewById(R.id.tv_magnet_data);
     }
 
     /**
@@ -292,24 +298,29 @@ public class CameraActivity extends AppCompatActivity {
 
         // Set rotation listener to update gyroscope data display
         gyroscopeSensor.setOnRotationListener((rotationX, rotationY, rotationZ) ->
-            runOnUiThread(() -> {
-                if (tvGyroData != null && gyroscopeOverlay != null) {
-                    String gyroData = String.format(Locale.US,
-                            "Gyro:\nX: %.1f°/s\nY: %.1f°/s\nZ: %.1f°/s",
-                            GyroscopeSensor.radiansToDegrees(rotationX),
-                            GyroscopeSensor.radiansToDegrees(rotationY),
-                            GyroscopeSensor.radiansToDegrees(rotationZ));
-                    tvGyroData.setText(gyroData);
-                }
+                runOnUiThread(() -> {
+                    if (tvGyroData != null && gyroscopeOverlay != null) {
+                        String gyroData = String.format(Locale.US,
+                                "X: %.1f°/s\nY: %.1f°/s\nZ: %.1f°/s",
+                                GyroscopeSensor.radiansToDegrees(rotationX),
+                                GyroscopeSensor.radiansToDegrees(rotationY),
+                                GyroscopeSensor.radiansToDegrees(rotationZ));
+                        tvGyroData.setText(gyroData);
 
-                // Stream sensor data to Python
-                if (sensorDataStreamer != null) {
-                    float degX = (float)GyroscopeSensor.radiansToDegrees(rotationX);
-                    float degY = (float)GyroscopeSensor.radiansToDegrees(rotationY);
-                    float degZ = (float)GyroscopeSensor.radiansToDegrees(rotationZ);
-                    sensorDataStreamer.updateGyroscope(degX, degY, degZ);
-                }
-            })
+                        // Make sure overlay is visible
+                        if (gyroscopeOverlay.getVisibility() != View.VISIBLE) {
+                            gyroscopeOverlay.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    // Stream sensor data to Python
+                    if (sensorDataStreamer != null) {
+                        float degX = (float)GyroscopeSensor.radiansToDegrees(rotationX);
+                        float degY = (float)GyroscopeSensor.radiansToDegrees(rotationY);
+                        float degZ = (float)GyroscopeSensor.radiansToDegrees(rotationZ);
+                        sensorDataStreamer.updateGyroscope(degX, degY, degZ);
+                    }
+                })
         );
 
         // Initialize gyroscope sensor
@@ -324,9 +335,6 @@ public class CameraActivity extends AppCompatActivity {
             } else {
                 if (gyroscopeOverlay != null) {
                     gyroscopeOverlay.setVisibility(View.GONE);
-                    if (tvGyroData != null) {
-                        tvGyroData.setText(R.string.gyroscope_disabled);
-                    }
                 }
             }
         } else {
@@ -336,7 +344,47 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
+    /**
+     * Position sensor overlays in a vertical stack on the right side
+     */
+    private void positionSensorOverlays() {
+        // Get screen dimensions
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenHeight = displayMetrics.heightPixels;
 
+        // Position each overlay with proper spacing
+        List<View> overlays = new ArrayList<>();
+        if (gyroscopeOverlay != null) overlays.add(gyroscopeOverlay);
+        if (accelerometerOverlay != null) overlays.add(accelerometerOverlay);
+        if (lightOverlay != null) overlays.add(lightOverlay);
+        if (proximityOverlay != null) overlays.add(proximityOverlay);
+        if (magnetometerOverlay != null) overlays.add(magnetometerOverlay);
+
+        // Remove any existing layout params
+        for (View overlay : overlays) {
+            if (overlay.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) overlay.getLayoutParams();
+                params.addRule(RelativeLayout.BELOW, 0);
+                params.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+                params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
+                overlay.setLayoutParams(params);
+            }
+        }
+
+        // Stack them vertically below the toolbar
+        int previousId = R.id.toolbar;
+        for (View overlay : overlays) {
+            if (overlay.getVisibility() == View.VISIBLE) {
+                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) overlay.getLayoutParams();
+                params.addRule(RelativeLayout.BELOW, previousId);
+                params.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
+                params.topMargin = 16; // dp, you might want to convert from dp to px
+                overlay.setLayoutParams(params);
+                previousId = overlay.getId();
+            }
+        }
+    }
     /**
      * Setup accelerometer sensor
      */
@@ -701,6 +749,8 @@ public class CameraActivity extends AppCompatActivity {
         if (magnetometerOverlay != null && SensorPreferences.isMagnetometerEnabled(this)) {
             magnetometerOverlay.setVisibility(View.VISIBLE);
         }
+        // Position overlays properly
+        positionSensorOverlays();
     }
 
     private void checkCameraPermission() {
