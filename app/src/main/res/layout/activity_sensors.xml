@@ -80,15 +80,6 @@
                         android:textSize="14sp"
                         android:layout_marginTop="8dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TODO (Student 1): Implement shake detection"
-                        android:textSize="12sp"
-                        android:textStyle="italic"
-                        android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_blue_dark"/>
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -134,15 +125,6 @@
                         android:text="Gyroscope: Disabled"
                         android:textSize="14sp"
                         android:layout_marginTop="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TODO (Student 2): Implement rotation detection"
-                        android:textSize="12sp"
-                        android:textStyle="italic"
-                        android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_blue_dark"/>
 
                 </LinearLayout>
 
@@ -190,15 +172,6 @@
                         android:textSize="14sp"
                         android:layout_marginTop="8dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TODO (Student 3): Implement ambient light detection"
-                        android:textSize="12sp"
-                        android:textStyle="italic"
-                        android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_blue_dark"/>
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -245,15 +218,6 @@
                         android:textSize="14sp"
                         android:layout_marginTop="8dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TODO (Student 4): Implement proximity detection"
-                        android:textSize="12sp"
-                        android:textStyle="italic"
-                        android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_blue_dark"/>
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
@@ -299,15 +263,6 @@
                         android:text="Magnetometer: Disabled"
                         android:textSize="14sp"
                         android:layout_marginTop="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TODO (Student 5): Implement compass functionality"
-                        android:textSize="12sp"
-                        android:textStyle="italic"
-                        android:layout_marginTop="4dp"
-                        android:textColor="@android:color/holo_blue_dark"/>
 
                 </LinearLayout>
 
