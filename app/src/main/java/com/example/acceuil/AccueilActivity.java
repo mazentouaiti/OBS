@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
@@ -98,15 +99,11 @@ public class AccueilActivity extends AppCompatActivity {
         findViewById(R.id.btn_obs).setOnClickListener(v -> {
             Toast.makeText(this, "Starting OBS Camera...", Toast.LENGTH_SHORT).show();
             // TODO: Open OBSActivity
-            // Intent intent = new Intent(this, OBSActivity.class);
-            // startActivity(intent);
         });
 
         findViewById(R.id.btn_profile).setOnClickListener(v -> {
             Toast.makeText(this, "Opening Profile...", Toast.LENGTH_SHORT).show();
             // TODO: Open ProfileActivity
-            // Intent intent = new Intent(this, ProfileActivity.class);
-            // startActivity(intent);
         });
 
         // Load data from Firebase
@@ -116,46 +113,50 @@ public class AccueilActivity extends AppCompatActivity {
 
     // ================== INTENT METHODS ==================
     private void openStreamPlayer(Stream stream) {
-        // Create an Intent to open StreamPlayerActivity
-        Intent intent = new Intent(AccueilActivity.this, StreamPlayerActivity.class);
+        String streamUrl = stream.getStreamUrl();
 
-        // Pass the stream data (you'll need to create this activity)
-        intent.putExtra("STREAM_TITLE", stream.getTitle());
-        intent.putExtra("STREAMER_NAME", stream.getStreamerName());
-        intent.putExtra("VIEWER_COUNT", stream.getViewerCount());
-        intent.putExtra("CATEGORY", stream.getCategory());
-        intent.putExtra("THUMBNAIL_COLOR", stream.getThumbnailColor());
-        intent.putExtra("DOCUMENT_ID", stream.getDocumentId()); // Important for Firebase
+        // Check if it's YouTube/Twitch for WebView
+        if (streamUrl != null && (streamUrl.contains("youtube.com") ||
+                streamUrl.contains("youtu.be") ||
+                streamUrl.contains("twitch.tv"))) {
 
-        startActivity(intent);
+            Intent intent = new Intent(AccueilActivity.this, WebViewStreamActivity.class);
+            intent.putExtra("STREAM_TITLE", stream.getTitle() != null ? stream.getTitle() : "Live Stream");
+            intent.putExtra("STREAMER_NAME", stream.getStreamerName() != null ? stream.getStreamerName() : "Unknown");
+            intent.putExtra("STREAM_URL", streamUrl);
 
-        // Optional: Add animation
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            if (streamUrl.contains("youtube.com") || streamUrl.contains("youtu.be")) {
+                intent.putExtra("PLATFORM", "youtube");
+            } else if (streamUrl.contains("twitch.tv")) {
+                intent.putExtra("PLATFORM", "twitch");
+            }
+
+            startActivity(intent);
+
+        } else {
+            // Use ExoPlayer for RTMP/HLS
+            Intent intent = new Intent(AccueilActivity.this, StreamPlayerActivity.class);
+            intent.putExtra("STREAM_TITLE", stream.getTitle() != null ? stream.getTitle() : "Live Stream");
+            intent.putExtra("STREAMER_NAME", stream.getStreamerName() != null ? stream.getStreamerName() : "Unknown");
+            intent.putExtra("VIEWER_COUNT", stream.getViewerCount());
+            intent.putExtra("STREAM_URL", streamUrl);
+            startActivity(intent);
+        }
     }
 
     private void openVideoPlayer(Video video) {
-        // Create an Intent to open VideoPlayerActivity
         Intent intent = new Intent(AccueilActivity.this, VideoPlayerActivity.class);
-
-        // Pass the video data (you'll need to create this activity)
-        intent.putExtra("VIDEO_TITLE", video.getTitle());
-        intent.putExtra("UPLOADER_NAME", video.getUploaderName());
+        intent.putExtra("VIDEO_TITLE", video.getTitle() != null ? video.getTitle() : "Video");
+        intent.putExtra("UPLOADER_NAME", video.getUploaderName() != null ? video.getUploaderName() : "Unknown");
         intent.putExtra("VIEWS", video.getViews());
         intent.putExtra("DURATION", video.getDurationSeconds());
-        intent.putExtra("CATEGORY", video.getCategory());
-        intent.putExtra("THUMBNAIL_URL", video.getThumbnailUrl());
         intent.putExtra("VIDEO_URL", video.getVideoUrl());
-        intent.putExtra("DOCUMENT_ID", video.getDocumentId()); // Important for Firebase
-
         startActivity(intent);
-
-        // Optional: Add animation
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     // ================== CARD CREATION METHODS ==================
     private View createStreamCard(Stream stream) {
-        // Main container (FrameLayout pour superposition image + overlay)
+        // Main container
         FrameLayout cardFrame = new FrameLayout(this);
         LinearLayout.LayoutParams frameParams = new LinearLayout.LayoutParams(
                 dpToPx(280),
@@ -164,7 +165,7 @@ public class AccueilActivity extends AppCompatActivity {
         frameParams.setMarginEnd(dpToPx(16));
         cardFrame.setLayoutParams(frameParams);
 
-        // ImageView pour thumbnail
+        // ImageView for thumbnail
         ImageView thumbnail = new ImageView(this);
         FrameLayout.LayoutParams thumbParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -173,21 +174,22 @@ public class AccueilActivity extends AppCompatActivity {
         thumbnail.setLayoutParams(thumbParams);
         thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-        // Charger l'image avec Glide
-        if (stream.getThumbnailUrl() != null && !stream.getThumbnailUrl().isEmpty()) {
+        // Load image with Glide - WITH NULL CHECKS
+        String thumbnailUrl = stream.getThumbnailUrl();
+        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+            int fallbackColor = getFallbackColor(stream);
             Glide.with(this)
-                    .load(stream.getThumbnailUrl())
-                    .placeholder(Color.parseColor(stream.getThumbnailColor()))
-                    .error(Color.parseColor(stream.getThumbnailColor()))
+                    .load(thumbnailUrl)
+                    .placeholder(getColorDrawable(fallbackColor))
+                    .error(getColorDrawable(fallbackColor))
                     .into(thumbnail);
         } else {
-            // Fallback à la couleur solide
-            thumbnail.setBackgroundColor(Color.parseColor(stream.getThumbnailColor()));
+            thumbnail.setBackgroundColor(getFallbackColor(stream));
         }
 
         cardFrame.addView(thumbnail);
 
-        // Overlay container pour texte
+        // Overlay container for text
         LinearLayout overlay = new LinearLayout(this);
         FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -196,9 +198,9 @@ public class AccueilActivity extends AppCompatActivity {
         overlay.setLayoutParams(overlayParams);
         overlay.setOrientation(LinearLayout.VERTICAL);
         overlay.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
-        overlay.setBackgroundColor(Color.parseColor("#40000000")); // Overlay semi-transparent
+        overlay.setBackgroundColor(Color.parseColor("#40000000"));
 
-        // Badge LIVE
+        // LIVE badge
         LinearLayout liveBadge = new LinearLayout(this);
         LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -225,9 +227,9 @@ public class AccueilActivity extends AppCompatActivity {
         spacerParams.weight = 1;
         spacer.setLayoutParams(spacerParams);
 
-        // Titre du stream
+        // Stream title
         TextView titleText = new TextView(this);
-        titleText.setText(stream.getTitle());
+        titleText.setText(stream.getTitle() != null ? stream.getTitle() : "Untitled Stream");
         titleText.setTextColor(Color.WHITE);
         titleText.setTextSize(18);
         titleText.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -239,9 +241,9 @@ public class AccueilActivity extends AppCompatActivity {
         titleParams.setMargins(0, 0, 0, dpToPx(4));
         titleText.setLayoutParams(titleParams);
 
-        // Nom du streamer
+        // Streamer name
         TextView streamerText = new TextView(this);
-        streamerText.setText(stream.getStreamerName());
+        streamerText.setText(stream.getStreamerName() != null ? stream.getStreamerName() : "Unknown");
         streamerText.setTextColor(Color.parseColor("#CCCCCC"));
         streamerText.setTextSize(14);
         streamerText.setShadowLayer(4, 0, 0, Color.BLACK);
@@ -252,7 +254,7 @@ public class AccueilActivity extends AppCompatActivity {
         streamerParams.setMargins(0, 0, 0, dpToPx(4));
         streamerText.setLayoutParams(streamerParams);
 
-        // Nombre de viewers
+        // Viewer count
         TextView viewerText = new TextView(this);
         viewerText.setText(stream.getFormattedViewerCount());
         viewerText.setTextColor(Color.WHITE);
@@ -260,14 +262,14 @@ public class AccueilActivity extends AppCompatActivity {
         viewerText.setTypeface(null, android.graphics.Typeface.BOLD);
         viewerText.setShadowLayer(4, 0, 0, Color.BLACK);
 
-        // Ajouter tous les éléments à l'overlay
+        // Add all elements to overlay
         overlay.addView(liveBadge);
         overlay.addView(spacer);
         overlay.addView(titleText);
         overlay.addView(streamerText);
         overlay.addView(viewerText);
 
-        // Ajouter l'overlay par-dessus le thumbnail
+        // Add overlay on top of thumbnail
         cardFrame.addView(overlay);
 
         // Click listener
@@ -278,8 +280,25 @@ public class AccueilActivity extends AppCompatActivity {
         return cardFrame;
     }
 
+    private int getFallbackColor(Stream stream) {
+        try {
+            String color = stream.getThumbnailColor();
+            if (color != null && !color.isEmpty()) {
+                return Color.parseColor(color);
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return Color.parseColor("#FF6B8B");
+    }
+
+    // ================== HELPER METHOD FOR GLIDE ==================
+    private android.graphics.drawable.ColorDrawable getColorDrawable(int color) {
+        return new android.graphics.drawable.ColorDrawable(color);
+    }
+
     private View createVideoCard(Video video) {
-        // Main container (FrameLayout to layer image + overlay)
+        // Main container
         FrameLayout cardFrame = new FrameLayout(this);
         LinearLayout.LayoutParams frameParams = new LinearLayout.LayoutParams(
                 dpToPx(180),
@@ -297,21 +316,24 @@ public class AccueilActivity extends AppCompatActivity {
         thumbnail.setLayoutParams(thumbParams);
         thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-        // Load image with Glide
-        if (video.getThumbnailUrl() != null && !video.getThumbnailUrl().isEmpty()) {
+        // Load image with Glide - WITH NULL CHECKS
+        String thumbnailUrl = video.getThumbnailUrl();
+        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+            String colorHex = video.getThumbnailColor() != null ? video.getThumbnailColor() : "#2A2A3E";
+            int fallbackColor = Color.parseColor(colorHex);
             Glide.with(this)
-                    .load(video.getThumbnailUrl())
-                    .placeholder(Color.parseColor(video.getThumbnailColor()))
-                    .error(Color.parseColor(video.getThumbnailColor()))
+                    .load(thumbnailUrl)
+                    .placeholder(getColorDrawable(fallbackColor))
+                    .error(getColorDrawable(fallbackColor))
                     .into(thumbnail);
         } else {
-            // Fallback to solid color
-            thumbnail.setBackgroundColor(Color.parseColor(video.getThumbnailColor()));
+            String color = video.getThumbnailColor() != null ? video.getThumbnailColor() : "#2A2A3E";
+            thumbnail.setBackgroundColor(Color.parseColor(color));
         }
 
         cardFrame.addView(thumbnail);
 
-        // Overlay container for text (dark transparent background)
+        // Overlay container
         LinearLayout overlay = new LinearLayout(this);
         FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -320,7 +342,7 @@ public class AccueilActivity extends AppCompatActivity {
         overlay.setLayoutParams(overlayParams);
         overlay.setOrientation(LinearLayout.VERTICAL);
         overlay.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-        overlay.setBackgroundColor(Color.parseColor("#40000000")); // Semi-transparent dark overlay
+        overlay.setBackgroundColor(Color.parseColor("#40000000"));
 
         // Duration badge
         TextView durationBadge = new TextView(this);
@@ -336,7 +358,7 @@ public class AccueilActivity extends AppCompatActivity {
         durationParams.gravity = Gravity.END;
         durationBadge.setLayoutParams(durationParams);
 
-        // Spacer to push text to bottom
+        // Spacer
         View spacer = new View(this);
         LinearLayout.LayoutParams spacerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -347,11 +369,11 @@ public class AccueilActivity extends AppCompatActivity {
 
         // Video title
         TextView titleText = new TextView(this);
-        titleText.setText(video.getTitle());
+        titleText.setText(video.getTitle() != null ? video.getTitle() : "Untitled Video");
         titleText.setTextColor(Color.WHITE);
         titleText.setTextSize(14);
         titleText.setTypeface(null, android.graphics.Typeface.BOLD);
-        titleText.setShadowLayer(4, 0, 0, Color.BLACK); // Text shadow for readability
+        titleText.setShadowLayer(4, 0, 0, Color.BLACK);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -361,7 +383,7 @@ public class AccueilActivity extends AppCompatActivity {
 
         // Uploader name
         TextView uploaderText = new TextView(this);
-        uploaderText.setText(video.getUploaderName());
+        uploaderText.setText(video.getUploaderName() != null ? video.getUploaderName() : "Unknown");
         uploaderText.setTextColor(Color.parseColor("#CCCCCC"));
         uploaderText.setTextSize(12);
         uploaderText.setShadowLayer(4, 0, 0, Color.BLACK);
@@ -379,17 +401,16 @@ public class AccueilActivity extends AppCompatActivity {
         viewsText.setTextSize(12);
         viewsText.setShadowLayer(4, 0, 0, Color.BLACK);
 
-        // Add all elements to overlay
+        // Add all elements
         overlay.addView(durationBadge);
         overlay.addView(spacer);
         overlay.addView(titleText);
         overlay.addView(uploaderText);
         overlay.addView(viewsText);
 
-        // Add overlay on top of thumbnail
         cardFrame.addView(overlay);
 
-        // ===== FIXED CLICK LISTENER =====
+        // Click listener
         cardFrame.setOnClickListener(v -> {
             openVideoPlayer(video);
         });
@@ -397,7 +418,7 @@ public class AccueilActivity extends AppCompatActivity {
         return cardFrame;
     }
 
-    // ================== FIREBASE DATA LOADING (UPDATED) ==================
+    // ================== FIREBASE DATA LOADING ==================
     private void loadLiveStreams() {
         streamsLoading.setVisibility(View.VISIBLE);
         streamsEmpty.setVisibility(View.GONE);
@@ -411,7 +432,7 @@ public class AccueilActivity extends AppCompatActivity {
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Stream stream = document.toObject(Stream.class);
-                        stream.setDocumentId(document.getId()); // SET THE DOCUMENT ID
+                        stream.setDocumentId(document.getId());
                         allStreams.add(stream);
                     }
 
@@ -448,7 +469,7 @@ public class AccueilActivity extends AppCompatActivity {
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Video video = document.toObject(Video.class);
-                        video.setDocumentId(document.getId()); // SET THE DOCUMENT ID
+                        video.setDocumentId(document.getId());
                         allVideos.add(video);
                     }
 
@@ -473,7 +494,7 @@ public class AccueilActivity extends AppCompatActivity {
                 });
     }
 
-    // ================== HELPER METHODS (KEEP AS IS) ==================
+    // ================== HELPER METHODS ==================
     private void setupCategoryChips() {
         String[] categories = {"All", "Gaming", "Music", "Coding", "Art", "Sports", "Talk"};
 
@@ -496,7 +517,6 @@ public class AccueilActivity extends AppCompatActivity {
         chip.setTextSize(14);
         chip.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(8));
 
-        // Style based on selection
         if (category.equals(selectedCategory)) {
             chip.setBackgroundColor(Color.parseColor("#4F8BF9"));
             chip.setTextColor(Color.WHITE);
@@ -571,8 +591,10 @@ public class AccueilActivity extends AppCompatActivity {
         // Filter streams
         List<Stream> filteredStreams = new ArrayList<>();
         for (Stream stream : allStreams) {
-            boolean matchesSearch = stream.getTitle().toLowerCase().contains(searchQuery) ||
-                    stream.getStreamerName().toLowerCase().contains(searchQuery);
+            String title = stream.getTitle() != null ? stream.getTitle().toLowerCase() : "";
+            String streamerName = stream.getStreamerName() != null ? stream.getStreamerName().toLowerCase() : "";
+
+            boolean matchesSearch = title.contains(searchQuery) || streamerName.contains(searchQuery);
 
             String streamCategory = stream.getCategory() != null ? stream.getCategory() : "All";
             boolean matchesCategory = selectedCategory.equals("All") || streamCategory.equals(selectedCategory);
@@ -585,8 +607,10 @@ public class AccueilActivity extends AppCompatActivity {
         // Filter videos
         List<Video> filteredVideos = new ArrayList<>();
         for (Video video : allVideos) {
-            boolean matchesSearch = video.getTitle().toLowerCase().contains(searchQuery) ||
-                    video.getUploaderName().toLowerCase().contains(searchQuery);
+            String title = video.getTitle() != null ? video.getTitle().toLowerCase() : "";
+            String uploaderName = video.getUploaderName() != null ? video.getUploaderName().toLowerCase() : "";
+
+            boolean matchesSearch = title.contains(searchQuery) || uploaderName.contains(searchQuery);
 
             String videoCategory = video.getCategory() != null ? video.getCategory() : "All";
             boolean matchesCategory = selectedCategory.equals("All") || videoCategory.equals(selectedCategory);

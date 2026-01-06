@@ -42,6 +42,13 @@ dependencies {
     implementation(libs.swiperefreshlayout)
     implementation(libs.firebase.storage)
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.19.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.19.1")
+
+    // Pour RTSP support
+    implementation("com.google.android.exoplayer:exoplayer-rtsp:2.19.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
