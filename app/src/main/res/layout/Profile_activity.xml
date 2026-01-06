@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -26,7 +27,7 @@
             android:layout_height="wrap_content"
             android:padding="24dp">
 
-            <!-- Image de Profil (Arrondie via CardView) -->
+            <!-- Image de Profil -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/image_container"
                 android:layout_width="100dp"
@@ -47,17 +48,15 @@
                     tools:srcCompat="@tools:sample/avatars" />
             </androidx.cardview.widget.CardView>
 
-            <!-- Barre de statistiques (Followers / Following) -->
+            <!-- Stats -->
             <LinearLayout
                 android:id="@+id/stats_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:orientation="horizontal"
-                android:baselineAligned="false"
                 app:layout_constraintTop_toBottomOf="@id/image_container">
 
-                <!-- Followers -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -69,7 +68,7 @@
                         android:id="@+id/followers_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1.2K"
+                        android:text="0"
                         android:textColor="@android:color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -82,13 +81,11 @@
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- Séparateur vertical -->
                 <View
                     android:layout_width="1dp"
                     android:layout_height="match_parent"
                     android:background="#E0E0E0" />
 
-                <!-- Following -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -100,7 +97,7 @@
                         android:id="@+id/following_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="350"
+                        android:text="0"
                         android:textColor="@android:color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -112,13 +109,11 @@
                         android:textColor="#757575"
                         android:textSize="12sp" />
                 </LinearLayout>
-
             </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Champ Nom -->
+    <!-- Nom -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_name"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -127,19 +122,16 @@
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="24dp"
         android:hint="Nom"
-        app:layout_constraintTop_toBottomOf="@id/profile_card"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/profile_card">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="John Doe"
             android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Champ Email -->
+    <!-- Email -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_email"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -148,19 +140,16 @@
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
         android:hint="Email"
-        app:layout_constraintTop_toBottomOf="@id/til_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/til_name">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="john.doe@example.com"
             android:inputType="textEmailAddress" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Champ Mot de passe -->
+    <!-- Nouveau mot de passe -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_password"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -170,9 +159,7 @@
         android:layout_marginTop="16dp"
         android:hint="Nouveau mot de passe"
         app:endIconMode="password_toggle"
-        app:layout_constraintTop_toBottomOf="@id/til_email"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/til_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_password"
@@ -181,14 +168,14 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Bouton Modifier (Sauvegarder) -->
+    <!-- Bouton Modifier -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_save_profile"
         style="@style/Widget.MaterialComponents.Button"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginTop="24dp"
         android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
         android:text="Modifier"
         app:cornerRadius="12dp"
         app:icon="@android:drawable/ic_menu_save"
@@ -197,19 +184,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/til_password" />
 
-    <!-- Container Actions Compte (Désactiver / Supprimer) -->
+    <!-- Actions compte -->
     <LinearLayout
         android:id="@+id/account_actions_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/btn_save_profile"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/btn_save_profile">
 
-        <!-- Bouton Désactiver compte -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_deactivate"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -225,7 +211,6 @@
             app:iconTint="@android:color/black"
             app:iconGravity="textStart" />
 
-        <!-- Bouton Supprimer compte -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_delete"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -240,10 +225,9 @@
             app:icon="@android:drawable/ic_menu_delete"
             app:iconTint="#D32F2F"
             app:iconGravity="textStart" />
-
     </LinearLayout>
 
-    <!-- Bouton Logout -->
+    <!-- Logout -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_logout"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -261,5 +245,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
