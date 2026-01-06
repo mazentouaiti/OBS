@@ -155,23 +155,50 @@ public class AccueilActivity extends AppCompatActivity {
 
     // ================== CARD CREATION METHODS ==================
     private View createStreamCard(Stream stream) {
-        LinearLayout card = new LinearLayout(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+        // Main container (FrameLayout pour superposition image + overlay)
+        FrameLayout cardFrame = new FrameLayout(this);
+        LinearLayout.LayoutParams frameParams = new LinearLayout.LayoutParams(
                 dpToPx(280),
                 dpToPx(180)
         );
-        cardParams.setMarginEnd(dpToPx(16));
-        card.setLayoutParams(cardParams);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+        frameParams.setMarginEnd(dpToPx(16));
+        cardFrame.setLayoutParams(frameParams);
 
-        try {
-            card.setBackgroundColor(Color.parseColor(stream.getThumbnailColor()));
-        } catch (Exception e) {
-            card.setBackgroundColor(Color.parseColor("#FF6B8B"));
+        // ImageView pour thumbnail
+        ImageView thumbnail = new ImageView(this);
+        FrameLayout.LayoutParams thumbParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        );
+        thumbnail.setLayoutParams(thumbParams);
+        thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        // Charger l'image avec Glide
+        if (stream.getThumbnailUrl() != null && !stream.getThumbnailUrl().isEmpty()) {
+            Glide.with(this)
+                    .load(stream.getThumbnailUrl())
+                    .placeholder(Color.parseColor(stream.getThumbnailColor()))
+                    .error(Color.parseColor(stream.getThumbnailColor()))
+                    .into(thumbnail);
+        } else {
+            // Fallback à la couleur solide
+            thumbnail.setBackgroundColor(Color.parseColor(stream.getThumbnailColor()));
         }
 
-        // LIVE badge
+        cardFrame.addView(thumbnail);
+
+        // Overlay container pour texte
+        LinearLayout overlay = new LinearLayout(this);
+        FrameLayout.LayoutParams overlayParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        );
+        overlay.setLayoutParams(overlayParams);
+        overlay.setOrientation(LinearLayout.VERTICAL);
+        overlay.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+        overlay.setBackgroundColor(Color.parseColor("#40000000")); // Overlay semi-transparent
+
+        // Badge LIVE
         LinearLayout liveBadge = new LinearLayout(this);
         LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -198,12 +225,13 @@ public class AccueilActivity extends AppCompatActivity {
         spacerParams.weight = 1;
         spacer.setLayoutParams(spacerParams);
 
-        // Stream title
+        // Titre du stream
         TextView titleText = new TextView(this);
         titleText.setText(stream.getTitle());
         titleText.setTextColor(Color.WHITE);
         titleText.setTextSize(18);
         titleText.setTypeface(null, android.graphics.Typeface.BOLD);
+        titleText.setShadowLayer(4, 0, 0, Color.BLACK);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -211,11 +239,12 @@ public class AccueilActivity extends AppCompatActivity {
         titleParams.setMargins(0, 0, 0, dpToPx(4));
         titleText.setLayoutParams(titleParams);
 
-        // Streamer name
+        // Nom du streamer
         TextView streamerText = new TextView(this);
         streamerText.setText(stream.getStreamerName());
         streamerText.setTextColor(Color.parseColor("#CCCCCC"));
         streamerText.setTextSize(14);
+        streamerText.setShadowLayer(4, 0, 0, Color.BLACK);
         LinearLayout.LayoutParams streamerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -223,25 +252,30 @@ public class AccueilActivity extends AppCompatActivity {
         streamerParams.setMargins(0, 0, 0, dpToPx(4));
         streamerText.setLayoutParams(streamerParams);
 
-        // Viewer count
+        // Nombre de viewers
         TextView viewerText = new TextView(this);
         viewerText.setText(stream.getFormattedViewerCount());
         viewerText.setTextColor(Color.WHITE);
         viewerText.setTextSize(14);
         viewerText.setTypeface(null, android.graphics.Typeface.BOLD);
+        viewerText.setShadowLayer(4, 0, 0, Color.BLACK);
 
-        card.addView(liveBadge);
-        card.addView(spacer);
-        card.addView(titleText);
-        card.addView(streamerText);
-        card.addView(viewerText);
+        // Ajouter tous les éléments à l'overlay
+        overlay.addView(liveBadge);
+        overlay.addView(spacer);
+        overlay.addView(titleText);
+        overlay.addView(streamerText);
+        overlay.addView(viewerText);
 
-        // ===== FIXED CLICK LISTENER =====
-        card.setOnClickListener(v -> {
+        // Ajouter l'overlay par-dessus le thumbnail
+        cardFrame.addView(overlay);
+
+        // Click listener
+        cardFrame.setOnClickListener(v -> {
             openStreamPlayer(stream);
         });
 
-        return card;
+        return cardFrame;
     }
 
     private View createVideoCard(Video video) {
