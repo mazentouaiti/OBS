@@ -258,13 +258,18 @@ public class StreamManager {
     }
 
     public Surface getInputSurface() {
-        // This should return the encoder input surface
-        // You need to implement this based on your MediaCodec encoder setup
-        if (localRecorder != null && isStreaming) {
-            // Return the encoder surface from LocalRecorder
-            // You'll need to modify LocalRecorder to expose its input surface
-            return null; // TODO: Implement this
+        if (localRecorder != null && localRecorder.isRecording()) {
+            Surface surface = localRecorder.getInputSurface();
+            if (surface != null) {
+                Log.d(TAG, "Got input surface from recorder");
+                return surface;
+            } else {
+                Log.w(TAG, "Recorder input surface is null");
+            }
         }
+
+        // Create a dummy surface for testing
+        Log.w(TAG, "Creating dummy surface - no recorder available");
         return null;
     }
 

@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.Range;
 import android.view.Surface;
 
 import androidx.core.app.ActivityCompat;
@@ -170,33 +171,36 @@ public class StreamingService extends Service {
         if (cameraDevice == null || !isCameraActive) return;
 
         try {
-            // Create a Surface for the camera preview (even though we don't show it)
-            // We'll use a dummy surface since we're not displaying the preview
-            Surface dummySurface = streamManager.getInputSurface();
-            if (dummySurface == null) {
-                // Create a dummy surface texture if needed
+            // Get encoder surface from StreamManager
+            Surface encoderSurface = streamManager.getInputSurface();
+            if (encoderSurface == null) {
+                Log.e(TAG, "Encoder surface is null!");
                 return;
             }
 
             cameraDevice.createCaptureSession(
-                    Collections.singletonList(dummySurface),
+                    Collections.singletonList(encoderSurface),
                     new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession session) {
                             captureSession = session;
                             try {
                                 CaptureRequest.Builder previewRequestBuilder =
-                                        cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                                previewRequestBuilder.addTarget(dummySurface);
+                                        cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+                                previewRequestBuilder.addTarget(encoderSurface);
                                 previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+
+                                // Set recording parameters
+                                previewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                                        new Range<>(30, 30));
 
                                 session.setRepeatingRequest(previewRequestBuilder.build(),
                                         null, backgroundHandler);
 
-                                Log.d(TAG, "Camera preview session configured in background");
+                                Log.d(TAG, "Camera connected to encoder surface");
                             } catch (Exception e) {
-                                Log.e(TAG, "Error setting up preview request", e);
+                                Log.e(TAG, "Error setting up recording request", e);
                             }
                         }
 
