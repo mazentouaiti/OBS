@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">VideoApp</string>
+    <string name="like">👍 Like</string>
+    <string name="subscribe">🔔 Subscribe</string>
+    <string name="comments">Comments</string>
+    <string name="add_comment">Add a comment…</string>
+    <string name="post">Post</string>
+    <string name="play_pause">Play / Pause</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="video_thumbnail">Video thumbnail</string>
+
+</resources>
