@@ -20,13 +20,44 @@
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar" />
 
+    <!-- Zoom Slider on Right Side -->
+    <SeekBar
+        android:id="@+id/zoom_slider"
+        android:layout_width="24dp"
+        android:layout_height="200dp"
+        android:layout_below="@id/toolbar"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="100dp"
+        android:max="100"
+        android:progress="0"
+        android:progressDrawable="@drawable/seekbar_vertical"
+        android:thumb="@drawable/zoom_thumb"
+        android:rotation="180" />
+
+    <!-- Zoom Value Display -->
+    <TextView
+        android:id="@+id/tv_zoom_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/zoom_slider"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="8dp"
+        android:background="#80000000"
+        android:padding="4dp"
+        android:text="1.0x"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+    <!-- Sensor Overlays (stacked on left side now since slider is on right) -->
     <!-- Gyroscope Data Overlay -->
     <LinearLayout
         android:id="@+id/gyroscope_overlay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/toolbar"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:background="#80000000"
         android:orientation="vertical"
@@ -46,20 +77,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="X: 0.00 rad/s\nY: 0.00 rad/s\nZ: 0.00 rad/s"
+            android:text="X: 0.00°/s\nY: 0.00°/s\nZ: 0.00°/s"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:fontFamily="monospace" />
 
     </LinearLayout>
 
+    <!-- Add other sensor overlays similarly on left side -->
     <!-- Accelerometer Data Overlay -->
     <LinearLayout
         android:id="@+id/accelerometer_overlay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/gyroscope_overlay"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:layout_marginTop="8dp"
         android:background="#80000000"
@@ -84,7 +116,6 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:fontFamily="monospace" />
-
     </LinearLayout>
 
     <!-- Light Sensor Overlay -->
@@ -93,7 +124,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/accelerometer_overlay"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:layout_marginTop="8dp"
         android:background="#80000000"
@@ -118,7 +149,6 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:fontFamily="monospace" />
-
     </LinearLayout>
 
     <!-- Proximity Sensor Overlay -->
@@ -127,7 +157,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/light_overlay"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:layout_marginTop="8dp"
         android:background="#80000000"
@@ -152,7 +182,6 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:fontFamily="monospace" />
-
     </LinearLayout>
 
     <!-- Magnetometer Overlay -->
@@ -161,7 +190,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/proximity_overlay"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:layout_marginTop="8dp"
         android:background="#80000000"
@@ -186,9 +215,7 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:fontFamily="monospace" />
-
     </LinearLayout>
-
     <!-- Status TextView -->
     <TextView
         android:id="@+id/tv_status"
@@ -214,35 +241,93 @@
         android:background="@drawable/circle_red"
         android:visibility="gone" />
 
+    <!-- Recording Time Display -->
+    <TextView
+        android:id="@+id/tv_recording_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="12dp"
+        android:background="#80000000"
+        android:padding="4dp"
+        android:text="00:00"
+        android:textColor="#FF0000"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
     <!-- Control Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Switch Camera Button -->
+        <ImageButton
+            android:id="@+id/btn_switch_camera"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_switch_camera"
+            android:contentDescription="Switch Camera" />
+
+        <!-- Recording Button (Red Circle) -->
+        <FrameLayout
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@drawable/record_button_background">
+
+            <ImageView
+                android:id="@+id/btn_record"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_record_circle" />
+
+        </FrameLayout>
+
+        <!-- Floating Window Button -->
+        <ImageButton
+            android:id="@+id/btn_floating"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_floating"
+            android:contentDescription="Floating Camera" />
+
+    </LinearLayout>
+
+    <!-- Zoom In/Out Buttons (Alternative to slider) -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
-        android:orientation="horizontal">
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btn_switch_camera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="Switch" />
+        <ImageButton
+            android:id="@+id/btn_zoom_in"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="8dp"
+            android:background="#80000000"
+            android:src="@drawable/ic_zoom_in"
+            android:contentDescription="Zoom In" />
 
-        <Button
-            android:id="@+id/btn_record"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:text="Record" />
-
-        <Button
-            android:id="@+id/btn_floating"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Float" />
+        <ImageButton
+            android:id="@+id/btn_zoom_out"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="#80000000"
+            android:src="@drawable/ic_zoom_out"
+            android:contentDescription="Zoom Out" />
 
     </LinearLayout>
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internal storage -->
+    <files-path
+        name="internal_files"
+        path="." />
+
+    <!-- Cache directory -->
+    <cache-path
+        name="cache"
+        path="." />
+
+    <!-- External storage root -->
+    <external-path
+        name="external_storage"
+        path="." />
+
+    <!-- External files directory -->
+    <external-files-path
+        name="external_files"
+        path="." />
+
+    <!-- External cache directory -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+
+    <!-- Movies directory for recordings -->
+    <external-path
+        name="movies"
+        path="Movies/OBS_Streams/" />
+
+    <!-- Streams directory -->
+    <external-path
+        name="streams"
+        path="Movies/OBS_Streams/Streams/" />
+</paths>

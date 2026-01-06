@@ -1,11 +1,13 @@
 package com.obs.mobile;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -22,13 +24,17 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +53,7 @@ import com.obs.mobile.sensors.GyroscopeSensor;
 import com.obs.mobile.sensors.LightSensor;
 import com.obs.mobile.sensors.ProximitySensor;
 import com.obs.mobile.sensors.MagnetometerSensor;
+import com.obs.mobile.streaming.StreamManager;
 import com.obs.mobile.utils.SensorPreferences;
 
 import java.util.ArrayList;
@@ -68,9 +75,6 @@ public class CameraActivity extends AppCompatActivity {
 
     private TextureView textureView;
     private TextView tvStatus;
-    private Button btnRecord;
-    private Button btnSwitchCamera;
-    private Button btnFloating;
     private View recordingIndicator;
 
     // Sensor instances
@@ -114,6 +118,26 @@ public class CameraActivity extends AppCompatActivity {
     // Broadcast receiver for sensor state changes
     private BroadcastReceiver sensorStateReceiver;
 
+    // Zoom variables
+    private SeekBar zoomSlider;
+    private TextView tvZoomValue;
+    private ImageButton btnZoomIn;
+    private ImageButton btnZoomOut;
+    private ImageView btnRecord;
+    private ImageButton btnSwitchCamera;
+    private ImageButton btnFloating;
+    private TextView tvRecordingTime;
+
+    private float currentZoomLevel = 1.0f;
+    private float minZoomLevel = 1.0f;
+    private float maxZoomLevel = 10.0f;
+    private Rect zoomRect;
+    private Handler recordingTimeHandler;
+    private Runnable recordingTimeRunnable;
+    private long recordingStartTime = 0;
+    private StreamManager streamManager;
+    private Button btnStartStreaming;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -130,7 +154,8 @@ public class CameraActivity extends AppCompatActivity {
 
             // Initialize UI components
             initializeViews();
-
+            // Initialize zoom controls
+            initializeZoomControls();
             cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
             // Set button listeners
@@ -183,6 +208,12 @@ public class CameraActivity extends AppCompatActivity {
                     // Called for each frame - don't log here
                 }
             });
+            // Commented out: button not present in layout
+            // btnStartStreaming = findViewById(R.id.btn_start_streaming);
+            // btnStartStreaming.setOnClickListener(v -> {
+            //     Intent intent = new Intent(CameraActivity.this, StreamingActivity.class);
+            //     startActivity(intent);
+            // });
 
             // Register ActivityResultLauncher for overlay permission
             overlayPermissionLauncher = registerForActivityResult(
@@ -224,39 +255,92 @@ public class CameraActivity extends AppCompatActivity {
     private void initializeViews() {
         textureView = findViewById(R.id.texture_view);
         tvStatus = findViewById(R.id.tv_status);
-        btnRecord = findViewById(R.id.btn_record);
-        btnSwitchCamera = findViewById(R.id.btn_switch_camera);
-        btnFloating = findViewById(R.id.btn_floating);
         recordingIndicator = findViewById(R.id.recording_indicator);
 
-        // Sensor overlays - these might not exist in the XML layout, so create them programmatically
-        findOrCreateOverlays();
-    }
+        // Button views (changed to ImageButton)
+        btnSwitchCamera = findViewById(R.id.btn_switch_camera);
+        btnFloating = findViewById(R.id.btn_floating);
+        btnRecord = findViewById(R.id.btn_record);  // Changed to ImageButton
 
-    /**
-     * Find existing overlays from XML layout
-     */
-    private void findOrCreateOverlays() {
-        // Find all overlays from XML layout
+        // New zoom views
+        zoomSlider = findViewById(R.id.zoom_slider);
+        tvZoomValue = findViewById(R.id.tv_zoom_value);
+        btnZoomIn = findViewById(R.id.btn_zoom_in);
+        btnZoomOut = findViewById(R.id.btn_zoom_out);
+        tvRecordingTime = findViewById(R.id.tv_recording_time);
+
+        // Set button listeners
+        btnSwitchCamera.setOnClickListener(v -> switchCamera());
+
+        // Floating button listener (if exists)
+        if (btnFloating != null) {
+            btnFloating.setOnClickListener(v -> startFloatingCamera());
+        }
+
+        // Record button listener (now ImageButton)
+        if (btnRecord != null) {
+            btnRecord.setOnClickListener(v -> toggleRecording());
+        }
+
+        // Initialize recording time handler
+        recordingTimeHandler = new Handler();
+
+        initializeSensorOverlays();
+    }
+    private void initializeSensorOverlays() {
+        // Gyroscope overlay
         gyroscopeOverlay = findViewById(R.id.gyroscope_overlay);
         tvGyroData = findViewById(R.id.tv_gyro_data);
 
+        // Accelerometer overlay (check if exists)
         accelerometerOverlay = findViewById(R.id.accelerometer_overlay);
-        tvAccelData = findViewById(R.id.tv_accel_data);
+        if (accelerometerOverlay != null) {
+            tvAccelData = findViewById(R.id.tv_accel_data);
+        }
 
+        // Light overlay (check if exists)
         lightOverlay = findViewById(R.id.light_overlay);
-        tvLightData = findViewById(R.id.tv_light_data);
+        if (lightOverlay != null) {
+            tvLightData = findViewById(R.id.tv_light_data);
+        }
 
+        // Proximity overlay (check if exists)
         proximityOverlay = findViewById(R.id.proximity_overlay);
-        tvProximityData = findViewById(R.id.tv_proximity_data);
+        if (proximityOverlay != null) {
+            tvProximityData = findViewById(R.id.tv_proximity_data);
+        }
 
+        // Magnetometer overlay (check if exists)
         magnetometerOverlay = findViewById(R.id.magnetometer_overlay);
-        tvMagnetData = findViewById(R.id.tv_magnet_data);
+        if (magnetometerOverlay != null) {
+            tvMagnetData = findViewById(R.id.tv_magnet_data);
+        }
     }
+    /**
+     * Find existing overlays from XML layout
+     */
+//    private void findOrCreateOverlays() {
+//        // Find all overlays from XML layout
+//        gyroscopeOverlay = findViewById(R.id.gyroscope_overlay);
+//        tvGyroData = findViewById(R.id.tv_gyro_data);
+//
+//        accelerometerOverlay = findViewById(R.id.accelerometer_overlay);
+//        tvAccelData = findViewById(R.id.tv_accel_data);
+//
+//        lightOverlay = findViewById(R.id.light_overlay);
+//        tvLightData = findViewById(R.id.tv_light_data);
+//
+//        proximityOverlay = findViewById(R.id.proximity_overlay);
+//        tvProximityData = findViewById(R.id.tv_proximity_data);
+//
+//        magnetometerOverlay = findViewById(R.id.magnetometer_overlay);
+//        tvMagnetData = findViewById(R.id.tv_magnet_data);
+//    }
 
     /**
      * Initialize broadcast receiver for sensor state changes
      */
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void initializeBroadcastReceiver() {
         sensorStateReceiver = new BroadcastReceiver() {
             @Override
@@ -269,13 +353,18 @@ public class CameraActivity extends AppCompatActivity {
             }
         };
 
-        // Register receiver with proper flags
+        // Register receiver with proper flags for different Android versions
         IntentFilter filter = new IntentFilter("com.obs.mobile.SENSOR_STATE_CHANGED");
-        // For Android 13 (API 33) and above, specify export flag
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(sensorStateReceiver, filter, RECEIVER_NOT_EXPORTED);
+            // Android 13+ requires explicit export flag
+            registerReceiver(sensorStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Android 8.0+ - use explicit flag
+            registerReceiver(sensorStateReceiver, filter, Context.RECEIVER_EXPORTED);
         } else {
-            registerReceiver(sensorStateReceiver, filter, RECEIVER_NOT_EXPORTED);
+            // Older Android versions
+            registerReceiver(sensorStateReceiver, filter);
         }
     }
 
@@ -344,6 +433,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
+
     /**
      * Position sensor overlays in a vertical stack on the right side
      */
@@ -385,6 +475,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
+
     /**
      * Setup accelerometer sensor
      */
@@ -393,19 +484,19 @@ public class CameraActivity extends AppCompatActivity {
 
         // Set data changed listener
         accelerometerSensor.setOnDataChangedListener((x, y, z, magnitude) ->
-            runOnUiThread(() -> {
-                if (tvAccelData != null && accelerometerOverlay != null) {
-                    String accelData = String.format(Locale.US,
-                            "Accel:\nX: %.2f\nY: %.2f\nZ: %.2f",
-                            x, y, z);
-                    tvAccelData.setText(accelData);
-                }
+                runOnUiThread(() -> {
+                    if (tvAccelData != null && accelerometerOverlay != null) {
+                        String accelData = String.format(Locale.US,
+                                "Accel:\nX: %.2f\nY: %.2f\nZ: %.2f",
+                                x, y, z);
+                        tvAccelData.setText(accelData);
+                    }
 
-                // Stream sensor data to Python
-                if (sensorDataStreamer != null) {
-                    sensorDataStreamer.updateAccelerometer(x, y, z, magnitude);
-                }
-            })
+                    // Stream sensor data to Python
+                    if (sensorDataStreamer != null) {
+                        sensorDataStreamer.updateAccelerometer(x, y, z, magnitude);
+                    }
+                })
         );
 
         // Initialize accelerometer sensor
@@ -441,24 +532,24 @@ public class CameraActivity extends AppCompatActivity {
 
         // Set light changed listener
         lightSensor.setOnLightChangedListener((lux, category) ->
-            runOnUiThread(() -> {
-                if (tvLightData != null && lightOverlay != null) {
-                    String lightData = String.format(Locale.US,
-                            "Light:\n%.0f lux\n%s",
-                            lux, category.getName());
-                    tvLightData.setText(lightData);
-                }
+                runOnUiThread(() -> {
+                    if (tvLightData != null && lightOverlay != null) {
+                        String lightData = String.format(Locale.US,
+                                "Light:\n%.0f lux\n%s",
+                                lux, category.getName());
+                        tvLightData.setText(lightData);
+                    }
 
-                // Auto-adjust brightness based on light level
-                if (autoBrightnessEnabled) {
-                    adjustScreenBrightness(lux);
-                }
+                    // Auto-adjust brightness based on light level
+                    if (autoBrightnessEnabled) {
+                        adjustScreenBrightness(lux);
+                    }
 
-                // Stream sensor data to Python
-                if (sensorDataStreamer != null) {
-                    sensorDataStreamer.updateLight(lux, category.getName());
-                }
-            })
+                    // Stream sensor data to Python
+                    if (sensorDataStreamer != null) {
+                        sensorDataStreamer.updateLight(lux, category.getName());
+                    }
+                })
         );
 
         // Initialize light sensor
@@ -497,25 +588,25 @@ public class CameraActivity extends AppCompatActivity {
 
         // Set proximity changed listener
         proximitySensor.setOnProximityChangedListener((distance, isNear) ->
-            runOnUiThread(() -> {
-                if (tvProximityData != null && proximityOverlay != null) {
-                    String state = isNear ? "NEAR" : "FAR";
-                    String proxData = String.format(Locale.US,
-                            "Proximity:\n%.1f cm\n%s",
-                            distance, state);
-                    tvProximityData.setText(proxData);
-                }
+                runOnUiThread(() -> {
+                    if (tvProximityData != null && proximityOverlay != null) {
+                        String state = isNear ? "NEAR" : "FAR";
+                        String proxData = String.format(Locale.US,
+                                "Proximity:\n%.1f cm\n%s",
+                                distance, state);
+                        tvProximityData.setText(proxData);
+                    }
 
-                // Auto-focus on proximity detection
-                if (autoFocusOnProximityEnabled && captureSession != null && previewRequestBuilder != null) {
-                    adjustCameraFocusByProximity(distance, isNear);
-                }
+                    // Auto-focus on proximity detection
+                    if (autoFocusOnProximityEnabled && captureSession != null && previewRequestBuilder != null) {
+                        adjustCameraFocusByProximity(distance, isNear);
+                    }
 
-                // Stream sensor data to Python
-                if (sensorDataStreamer != null) {
-                    sensorDataStreamer.updateProximity(distance, isNear);
-                }
-            })
+                    // Stream sensor data to Python
+                    if (sensorDataStreamer != null) {
+                        sensorDataStreamer.updateProximity(distance, isNear);
+                    }
+                })
         );
 
         // Initialize proximity sensor
@@ -554,19 +645,19 @@ public class CameraActivity extends AppCompatActivity {
 
         // Set compass change listener
         magnetometerSensor.setOnCompassChangeListener((azimuth, direction) ->
-            runOnUiThread(() -> {
-                if (tvMagnetData != null && magnetometerOverlay != null) {
-                    String magnetData = String.format(Locale.US,
-                            "Compass:\n%s\n%.0f°",
-                            direction.getAbbreviation(), azimuth);
-                    tvMagnetData.setText(magnetData);
-                }
+                runOnUiThread(() -> {
+                    if (tvMagnetData != null && magnetometerOverlay != null) {
+                        String magnetData = String.format(Locale.US,
+                                "Compass:\n%s\n%.0f°",
+                                direction.getAbbreviation(), azimuth);
+                        tvMagnetData.setText(magnetData);
+                    }
 
-                // Stream sensor data to Python
-                if (sensorDataStreamer != null) {
-                    sensorDataStreamer.updateMagnetometer(azimuth, direction.getName());
-                }
-            })
+                    // Stream sensor data to Python
+                    if (sensorDataStreamer != null) {
+                        sensorDataStreamer.updateMagnetometer(azimuth, direction.getName());
+                    }
+                })
         );
 
         // Initialize magnetometer sensor
@@ -708,11 +799,18 @@ public class CameraActivity extends AppCompatActivity {
      * Hide all UI elements (for PiP mode)
      */
     private void hideAllUI() {
-        if (btnRecord != null) btnRecord.setVisibility(View.GONE);
         if (btnSwitchCamera != null) btnSwitchCamera.setVisibility(View.GONE);
         if (btnFloating != null) btnFloating.setVisibility(View.GONE);
+        if (btnRecord != null) btnRecord.setVisibility(View.GONE);
         if (tvStatus != null) tvStatus.setVisibility(View.GONE);
         if (recordingIndicator != null) recordingIndicator.setVisibility(View.GONE);
+        if (tvRecordingTime != null) tvRecordingTime.setVisibility(View.GONE);
+
+        // Hide zoom controls
+        if (zoomSlider != null) zoomSlider.setVisibility(View.GONE);
+        if (tvZoomValue != null) tvZoomValue.setVisibility(View.GONE);
+        if (btnZoomIn != null) btnZoomIn.setVisibility(View.GONE);
+        if (btnZoomOut != null) btnZoomOut.setVisibility(View.GONE);
 
         // Hide all sensor overlays
         if (gyroscopeOverlay != null) gyroscopeOverlay.setVisibility(View.GONE);
@@ -726,11 +824,24 @@ public class CameraActivity extends AppCompatActivity {
      * Show all UI elements (when exiting PiP mode)
      */
     private void showAllUI() {
-        if (btnRecord != null) btnRecord.setVisibility(View.VISIBLE);
         if (btnSwitchCamera != null) btnSwitchCamera.setVisibility(View.VISIBLE);
         if (btnFloating != null) btnFloating.setVisibility(View.VISIBLE);
+        if (btnRecord != null) btnRecord.setVisibility(View.VISIBLE);
         if (recordingIndicator != null && isRecording) {
             recordingIndicator.setVisibility(View.VISIBLE);
+        }
+
+        // Show zoom controls
+        if (zoomSlider != null) zoomSlider.setVisibility(View.VISIBLE);
+        if (tvZoomValue != null) {
+            tvZoomValue.setVisibility(isRecording ? View.VISIBLE : View.INVISIBLE);
+        }
+        if (btnZoomIn != null) btnZoomIn.setVisibility(View.VISIBLE);
+        if (btnZoomOut != null) btnZoomOut.setVisibility(View.VISIBLE);
+
+        // Show recording time if recording
+        if (tvRecordingTime != null) {
+            tvRecordingTime.setVisibility(isRecording ? View.VISIBLE : View.GONE);
         }
 
         // Show sensor overlays based on preferences
@@ -749,8 +860,6 @@ public class CameraActivity extends AppCompatActivity {
         if (magnetometerOverlay != null && SensorPreferences.isMagnetometerEnabled(this)) {
             magnetometerOverlay.setVisibility(View.VISIBLE);
         }
-        // Position overlays properly
-        positionSensorOverlays();
     }
 
     private void checkCameraPermission() {
@@ -955,18 +1064,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    private void toggleRecording() {
-        isRecording = !isRecording;
-        if (isRecording) {
-            btnRecord.setText(R.string.btn_stop_record);
-            recordingIndicator.setVisibility(View.VISIBLE);
-        } else {
-            btnRecord.setText(R.string.btn_record);
-            recordingIndicator.setVisibility(View.GONE);
-        }
-        Toast.makeText(this, isRecording ? "Recording..." : "Stopped", Toast.LENGTH_SHORT).show();
-    }
-
     private void switchCamera() {
         isFrontCamera = !isFrontCamera;
         closeCamera();
@@ -1035,7 +1132,7 @@ public class CameraActivity extends AppCompatActivity {
                 window.setAttributes(layoutParams);
 
                 Log.d(TAG, String.format(Locale.US,
-                    "Auto Brightness: %.0f lux -> %.2f brightness", lux, brightnessLevel));
+                        "Auto Brightness: %.0f lux -> %.2f brightness", lux, brightnessLevel));
             }
         } catch (Exception e) {
             Log.e(TAG, "Error adjusting brightness: " + e.getMessage());
@@ -1142,7 +1239,9 @@ public class CameraActivity extends AppCompatActivity {
             // Receiver was not registered
             Log.d(TAG, "Receiver not registered: " + e.getMessage());
         }
-
+        if (streamManager != null && streamManager.isStreaming()) {
+            streamManager.stopStreaming();
+        }
         // Clean up all sensors
         if (accelerometerSensor != null) accelerometerSensor.stopListening();
         if (gyroscopeSensor != null) gyroscopeSensor.stopListening();
@@ -1205,7 +1304,7 @@ public class CameraActivity extends AppCompatActivity {
             if (isNear) {
                 // Object is near - trigger autofocus
                 Log.d(TAG, String.format(Locale.US,
-                    "Auto Focus: Object detected at %.1f cm - focusing...", distanceCm));
+                        "Auto Focus: Object detected at %.1f cm - focusing...", distanceCm));
 
                 // Trigger autofocus on detected object
                 previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
@@ -1229,7 +1328,7 @@ public class CameraActivity extends AppCompatActivity {
             } else {
                 // Object is far - maintain continuous focus
                 Log.d(TAG, String.format(Locale.US,
-                    "Auto Focus: Object far (%.1f cm) - continuous focus active", distanceCm));
+                        "Auto Focus: Object far (%.1f cm) - continuous focus active", distanceCm));
 
                 previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
@@ -1268,6 +1367,285 @@ public class CameraActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             Log.e(TAG, "Error resetting camera focus: " + e.getMessage());
         }
+    }
+
+    /**
+     * Initialize zoom controls
+     */
+    private void initializeZoomControls() {
+        // Set up zoom slider
+        zoomSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    // Convert progress (0-100) to zoom level (minZoom - maxZoom)
+                    float zoom = minZoomLevel + ((maxZoomLevel - minZoomLevel) * progress / 100f);
+                    setZoomLevel(zoom);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // Optional: Visual feedback when user starts dragging
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // Optional: Visual feedback when user stops dragging
+            }
+        });
+
+        // Set up zoom in button
+        btnZoomIn.setOnClickListener(v -> {
+            float newZoom = Math.min(currentZoomLevel + 0.5f, maxZoomLevel);
+            setZoomLevel(newZoom);
+            updateZoomSliderPosition(newZoom);
+        });
+
+        // Set up zoom out button
+        btnZoomOut.setOnClickListener(v -> {
+            float newZoom = Math.max(currentZoomLevel - 0.5f, minZoomLevel);
+            setZoomLevel(newZoom);
+            updateZoomSliderPosition(newZoom);
+        });
+
+        // Add pinch-to-zoom gesture
+        textureView.setOnTouchListener(new View.OnTouchListener() {
+            private float startDistance = 0f;
+            private float startZoom = 1.0f;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getPointerCount() == 2) {
+                    switch (event.getActionMasked()) {
+                        case MotionEvent.ACTION_POINTER_DOWN:
+                            startDistance = getFingerDistance(event);
+                            startZoom = currentZoomLevel;
+                            break;
+
+                        case MotionEvent.ACTION_MOVE:
+                            float currentDistance = getFingerDistance(event);
+                            if (startDistance > 0) {
+                                float scale = currentDistance / startDistance;
+                                float newZoom = startZoom * scale;
+                                newZoom = Math.max(minZoomLevel, Math.min(maxZoomLevel, newZoom));
+                                setZoomLevel(newZoom);
+                                updateZoomSliderPosition(newZoom);
+                            }
+                            break;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            private float getFingerDistance(MotionEvent event) {
+                float x = event.getX(0) - event.getX(1);
+                float y = event.getY(0) - event.getY(1);
+                return (float) Math.sqrt(x * x + y * y);
+            }
+        });
+    }
+
+    /**
+     * Set zoom level and update camera
+     */
+    private void setZoomLevel(float zoomLevel) {
+        if (zoomLevel < minZoomLevel || zoomLevel > maxZoomLevel) {
+            return;
+        }
+
+        currentZoomLevel = zoomLevel;
+
+        // Update UI
+        runOnUiThread(() -> {
+            String zoomText = String.format(Locale.US, "%.1fx", zoomLevel);
+            tvZoomValue.setText(zoomText);
+
+            // Show/hide zoom value temporarily
+            tvZoomValue.setVisibility(View.VISIBLE);
+            tvZoomValue.postDelayed(() -> {
+                if (!isRecording) { // Keep visible during recording
+                    tvZoomValue.setVisibility(View.INVISIBLE);
+                }
+            }, 1000);
+        });
+
+        // Apply zoom to camera
+        applyZoomToCamera();
+    }
+
+    /**
+     * Update zoom slider position based on zoom level
+     */
+    private void updateZoomSliderPosition(float zoomLevel) {
+        int progress = (int) ((zoomLevel - minZoomLevel) * 100 / (maxZoomLevel - minZoomLevel));
+        zoomSlider.setProgress(progress);
+    }
+
+    /**
+     * Apply zoom to camera using Camera2 API
+     */
+    private void applyZoomToCamera() {
+        if (captureSession == null || previewRequestBuilder == null) {
+            return;
+        }
+
+        try {
+            // Get camera characteristics to determine sensor size
+            String cameraId = chooseCameraId();
+            if (cameraId == null) return;
+
+            CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(cameraId);
+            Rect sensorArraySize = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+
+            if (sensorArraySize == null) {
+                return;
+            }
+
+            // Calculate zoom rectangle
+            int width = sensorArraySize.width();
+            int height = sensorArraySize.height();
+
+            // Center of the sensor
+            int centerX = width / 2;
+            int centerY = height / 2;
+
+            // Calculate zoomed area
+            int cropWidth = (int) (width / currentZoomLevel);
+            int cropHeight = (int) (height / currentZoomLevel);
+
+            // Ensure crop area is within bounds
+            int left = Math.max(0, centerX - cropWidth / 2);
+            int top = Math.max(0, centerY - cropHeight / 2);
+            int right = Math.min(width, left + cropWidth);
+            int bottom = Math.min(height, top + cropHeight);
+
+            zoomRect = new Rect(left, top, right, bottom);
+
+            // Apply zoom by setting crop region
+            previewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+
+            // Update preview
+            captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, backgroundHandler);
+
+            Log.d(TAG, "Zoom applied: " + currentZoomLevel + "x, Crop: " + zoomRect);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error applying zoom: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Toggle recording with visual feedback
+     */
+    private void toggleRecording() {
+        isRecording = !isRecording;
+
+        runOnUiThread(() -> {
+            if (isRecording) {
+                // Start recording
+                startRecording();
+
+                // Update recording button (make it a square when recording)
+                if (btnRecord != null) {
+                    // You can change the icon to a square or add animation
+                    btnRecord.setImageResource(R.drawable.ic_stop_circle);
+                    // Add scale animation
+                    btnRecord.animate()
+                            .scaleX(0.9f)
+                            .scaleY(0.9f)
+                            .setDuration(200)
+                            .start();
+                }
+
+                // Show recording indicator and time
+                recordingIndicator.setVisibility(View.VISIBLE);
+                tvRecordingTime.setVisibility(View.VISIBLE);
+                recordingStartTime = System.currentTimeMillis();
+                startRecordingTimer();
+
+                // Keep zoom value visible during recording
+                tvZoomValue.setVisibility(View.VISIBLE);
+
+                Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show();
+            } else {
+                // Stop recording
+                stopRecording();
+
+                // Reset recording button
+                if (btnRecord != null) {
+                    btnRecord.setImageResource(R.drawable.ic_record_circle);
+                    btnRecord.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(200)
+                            .start();
+                }
+
+                // Hide recording indicator and time
+                recordingIndicator.setVisibility(View.GONE);
+                tvRecordingTime.setVisibility(View.GONE);
+                stopRecordingTimer();
+
+                // Hide zoom value after delay
+                tvZoomValue.postDelayed(() -> {
+                    tvZoomValue.setVisibility(View.INVISIBLE);
+                }, 1000);
+
+                Toast.makeText(this, "Recording stopped", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Start recording timer
+     */
+    private void startRecordingTimer() {
+        recordingTimeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isRecording) {
+                    long elapsedTime = System.currentTimeMillis() - recordingStartTime;
+                    long seconds = (elapsedTime / 1000) % 60;
+                    long minutes = (elapsedTime / (1000 * 60)) % 60;
+
+                    String timeText = String.format(Locale.US, "%02d:%02d", minutes, seconds);
+                    tvRecordingTime.setText(timeText);
+
+                    // Schedule next update in 1 second
+                    recordingTimeHandler.postDelayed(this, 1000);
+                }
+            }
+        };
+
+        recordingTimeHandler.post(recordingTimeRunnable);
+    }
+
+    /**
+     * Stop recording timer
+     */
+    private void stopRecordingTimer() {
+        if (recordingTimeHandler != null && recordingTimeRunnable != null) {
+            recordingTimeHandler.removeCallbacks(recordingTimeRunnable);
+        }
+        tvRecordingTime.setText("00:00");
+    }
+
+    /**
+     * Start recording (implement your actual recording logic here)
+     */
+    private void startRecording() {
+        // TODO: Implement actual recording logic
+        Log.d(TAG, "Recording started at zoom: " + currentZoomLevel + "x");
+    }
+
+    /**
+     * Stop recording (implement your actual recording logic here)
+     */
+    private void stopRecording() {
+        // TODO: Implement actual recording logic
+        Log.d(TAG, "Recording stopped");
     }
 }
 

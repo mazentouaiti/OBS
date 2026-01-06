@@ -1,31 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.obs.mobile">
 
-    <!-- Camera permission -->
+    <!-- Permissions (remove duplicates and fix order) -->
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Network permission for sensor data streaming to Python -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Optional: For recording audio with video -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="PermissionImpliedByFeatureDeclaration" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
-    <!-- Optional: For saving recordings -->
+    <!-- Storage permissions for different Android versions -->
+    <!-- Android 13+ (API 33+) - Granular media permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <!-- Android 10-12 (API 29-32) - Legacy storage with scoped storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+        android:maxSdkVersion="29"
+        tools:ignore="ScopedStorage" />
 
-    <!-- Permission for overlay window (floating camera) -->
+    <!-- Manage external storage permission (for full file access if needed) -->
+    <!-- Only request this if absolutely necessary -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!-- Floating window permission -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Permission for foreground service -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <!-- Optional: For Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Camera features -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+
+    <!-- Audio features -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <!-- Sensor features -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.proximity" android:required="false" />
 
     <!-- PiP support -->
     <uses-feature android:name="android.software.picture_in_picture" android:required="false" />
@@ -38,11 +64,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.OBS">
+        android:theme="@style/Theme.OBS"
+        android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
 
         <!-- Splash Activity - Launcher -->
         <activity
-            android:name="com.obs.mobile.SplashActivity"
+            android:name=".SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.OBS.Splash">
             <intent-filter>
@@ -53,29 +82,69 @@
 
         <!-- Main Menu Activity -->
         <activity
-            android:name="com.obs.mobile.MainMenuActivity"
-            android:exported="false" />
+            android:name=".MainMenuActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OBS" />
 
         <!-- Camera Activity with PiP support -->
         <activity
-            android:name="com.obs.mobile.CameraActivity"
+            android:name=".CameraActivity"
             android:exported="false"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:supportsPictureInPicture="true"
-            android:screenOrientation="portrait" />
+            android:theme="@style/Theme.OBS.NoActionBar" />
 
         <!-- Sensors Activity -->
         <activity
-            android:name="com.obs.mobile.SensorsActivity"
-            android:exported="false" />
+            android:name=".SensorsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OBS" />
 
+        <!-- Streaming Activity -->
+        <activity
+            android:name=".StreamingActivity"
+            android:exported="false"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:theme="@style/Theme.OBS.NoActionBar" />
+
+        <!-- Streams Library Activity -->
+        <activity
+            android:name=".StreamsLibraryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OBS" />
+
+        <!-- Stream Playback Activity -->
+        <activity
+            android:name=".StreamPlaybackActivity"
+            android:exported="false"
+            android:theme="@style/Theme.OBS.NoActionBar" />
 
         <!-- Floating Camera Service -->
         <service
-            android:name="com.obs.mobile.FloatingCameraService"
+            android:name=".FloatingCameraService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="camera" />
+            android:foregroundServiceType="camera"
+            tools:ignore="ForegroundServiceType" />
+
+        <!-- Streaming Service -->
+        <service
+            android:name=".streaming.StreamingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="camera"
+            tools:ignore="ForegroundServiceType" />
+
+        <!-- File Provider for file sharing -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

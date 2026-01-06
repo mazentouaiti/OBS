@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Camera Preview Background -->
+    <TextureView
+        android:id="@+id/texture_view_stream"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top Header with Stream Status -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="@drawable/gradient_top"
+        android:padding="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Live Indicator -->
+        <View
+            android:id="@+id/live_indicator"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:background="#FF0000"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_stream_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OFFLINE"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginStart="8dp" />
+
+        <!-- Spacing -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Viewer Count -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👥"
+            android:textSize="16sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/tv_viewer_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textColor="#44FF44"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="16dp" />
+
+        <!-- Bitrate Display -->
+        <TextView
+            android:id="@+id/tv_bitrate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 kbps"
+            android:textColor="#FFFF00"
+            android:textSize="12sp"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Storage Info -->
+        <TextView
+            android:id="@+id/tv_storage_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💾 0 MB"
+            android:textColor="#FFB3FF"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Recordings Button -->
+        <Button
+            android:id="@+id/btn_recordings"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="📁 Files"
+            android:textSize="11sp"
+            android:background="@drawable/btn_secondary"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+
+    <!-- Bottom Control Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/gradient_bottom"
+        android:padding="16dp"
+        android:orientation="vertical">
+
+        <!-- Primary Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:spacing="8dp">
+
+            <Button
+                android:id="@+id/btn_start_stream"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="🔴 GO LIVE"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_go_live"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btn_stop_stream"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="⏹ STOP"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_stop"
+                android:enabled="false" />
+
+        </LinearLayout>
+
+        <!-- Secondary Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            android:spacing="8dp">
+
+            <Button
+                android:id="@+id/btn_toggle_camera"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="📷 Switch"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:background="@drawable/btn_secondary"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btn_toggle_chat"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="💬 Chat"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:background="@drawable/btn_secondary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Chat Overlay (Right side) -->
+    <LinearLayout
+        android:id="@+id/chat_overlay"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:layout_marginTop="56dp"
+        android:layout_marginBottom="120dp"
+        android:orientation="vertical"
+        android:background="#E6000000">
+
+        <!-- Chat Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:background="#CC1a1a1a">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💬 LIVE CHAT"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <!-- Chat Messages -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_chat"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scrollbars="vertical" />
+
+        <!-- Chat Input -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#CC1a1a1a"
+            android:padding="8dp">
+
+            <EditText
+                android:id="@+id/et_chat_message"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:hint="Message..."
+                android:textColor="#FFFFFF"
+                android:textColorHint="#888888"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="#333333"
+                android:layout_marginBottom="6dp"
+                android:inputType="text" />
+
+            <Button
+                android:id="@+id/btn_send_chat"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:text="Send"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:background="@drawable/btn_send_chat" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

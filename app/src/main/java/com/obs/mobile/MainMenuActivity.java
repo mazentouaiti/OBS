@@ -10,22 +10,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.activity.OnBackPressedCallback;
 
-/**
- * MainMenuActivity - Main Menu Screen
- *
- * Displays menu buttons to navigate to different features:
- * - Start Camera/Recording
- * - Sensor Settings
- * - Scenes
- * - Exit
- *
- * This is the main hub of the application after splash screen
- */
+
 public class MainMenuActivity extends AppCompatActivity {
 
     private Button btnCamera;
     private Button btnSensors;
-
+    private Button btnStreaming; // NEW: Streaming button
     private Button btnExit;
 
     @Override
@@ -61,6 +51,7 @@ public class MainMenuActivity extends AppCompatActivity {
     private void initializeViews() {
         btnCamera = findViewById(R.id.btn_camera);
         btnSensors = findViewById(R.id.btn_sensors);
+        btnStreaming = findViewById(R.id.btn_streaming); // NEW: Find streaming button
         btnExit = findViewById(R.id.btn_exit);
     }
 
@@ -79,7 +70,11 @@ public class MainMenuActivity extends AppCompatActivity {
             Intent intent = new Intent(MainMenuActivity.this, SensorsActivity.class);
             startActivity(intent);
         });
-
+// NEW: Streaming button - Navigate to Streaming Activity
+        btnStreaming.setOnClickListener(v -> {
+            Intent intent = new Intent(MainMenuActivity.this, StreamingActivity.class);
+            startActivity(intent);
+        });
         // Exit button - Show confirmation dialog
         btnExit.setOnClickListener(v -> showExitDialog());
     }

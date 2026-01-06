@@ -48,6 +48,7 @@
                 android:gravity="center"
                 android:layout_marginBottom="32dp"/>
 
+            <!-- Camera/Recording Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_camera"
                 android:layout_width="match_parent"
@@ -58,6 +59,18 @@
                 app:iconGravity="start"
                 android:layout_marginBottom="16dp"/>
 
+            <!-- NEW: Streaming Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_streaming"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Live Streaming"
+                android:textSize="16sp"
+                app:icon="@android:drawable/ic_menu_share"
+                app:iconGravity="start"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Sensor Settings Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_sensors"
                 android:layout_width="match_parent"
@@ -68,6 +81,7 @@
                 app:iconGravity="start"
                 android:layout_marginBottom="16dp"/>
 
+            <!-- Exit Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_exit"
                 android:layout_width="match_parent"
@@ -84,4 +98,3 @@
     </ScrollView>
 
 </LinearLayout>
-

@@ -42,4 +42,9 @@
     <string name="overlay_permission_message">Floating camera needs permission to display over other apps</string>
     <string name="grant">Grant</string>
     <string name="cancel">Cancel</string>
+
+    <!-- Add to res/values/strings.xml -->
+    <string name="streaming_service_channel_name">Streaming Service</string>
+    <string name="streaming_notification_title">Live Streaming Active</string>
+    <string name="streaming_notification_content">Streaming in background...</string>
 </resources>
