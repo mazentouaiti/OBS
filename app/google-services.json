@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "780760197970",
+    "project_id": "hamma3atchan",
+    "storage_bucket": "hamma3atchan.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780760197970:android:0275e6ec4891dc7617688b",
+        "android_client_info": {
+          "package_name": "com.example.acceuil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqAAQ_jQI4b59naIzflH49qKL7QjT6MgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
