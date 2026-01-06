@@ -1,5 +1,6 @@
 package com.example.Rocks.Controller;
 
+import com.example.Rocks.Models.Users;
 import com.google.firebase.auth.FirebaseAuth;
 
 /**
@@ -18,19 +19,28 @@ public class LoginController {
      * @param listener Callback UI
      */
     public void login(String email, String password, OnLoginListener listener) {
-        // 1. Validation locale
-        if (email.isEmpty() || password.isEmpty()) {
-            listener.onError("Tous les champs sont requis.");
-            return;
-        }
-        // 2. Appel Firebase Auth
+        // ... validation ...
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) listener.onSuccess();
-                    else listener.onError("Échec de la connexion.");
+                    if (task.isSuccessful()) {
+                        // 👇 Add this: Load profile after successful login
+                        new ProfileController().loadProfile(new ProfileController.OnProfileLoadListener() {
+                            @Override
+                            public void onProfileLoaded(Users user) {
+                                listener.onSuccess(); // Proceed to ProfileActivity
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                listener.onError("Profil introuvable : " + message);
+                            }
+                        });
+                    } else {
+                        listener.onError("Échec de la connexion.");
+                    }
                 });
     }
-
     public interface OnLoginListener {
         void onSuccess();
         void onError(String message);

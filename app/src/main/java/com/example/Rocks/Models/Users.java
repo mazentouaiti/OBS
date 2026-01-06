@@ -5,11 +5,11 @@ public class Users {
     // Identifiant unique (Généré par Firebase ou Base de données)
     private String userId;
 
-    // Champs visibles dans SignUp_activity.xml et Profile_activity.xml
+    // Champs visibles dans sign_up_activity.xml et activity_profile.xml
     private String fullName;
     private String email;
 
-    // Champs visibles dans Profile_activity.xml
+    // Champs visibles dans activity_profile.xml
     private String profileImageUrl;
     private int followersCount;
     private int followingCount;
